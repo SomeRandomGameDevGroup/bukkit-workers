@@ -1,3 +1,3 @@
 name: Workers
 main: org.randomgd.bukkit.WorkerHandler
-version: 0.1
+version: 0.1.2

@@ -27,16 +27,17 @@ public final class ChestHandler {
 		Inventory inventory = chest.getInventory();
 		ItemStack[] stacks = inventory.getContents();
 		int size = inventory.getSize();
+		int maxSize = inventory.getMaxStackSize();
 		for (int sI = 0; (sI < size) && (result > 0); ++sI) {
 			int curAmount = result;
-			if (curAmount > 64) {
-				curAmount = 64;
+			if (curAmount > maxSize) {
+				curAmount = maxSize;
 			}
 			ItemStack s = stacks[sI];
 			if (s != null) {
 				if (s.getType().equals(material)) {
 					int stackSize = s.getAmount();
-					int room = 64 - stackSize;
+					int room = maxSize - stackSize;
 					if (room > curAmount) {
 						room = curAmount;
 					}

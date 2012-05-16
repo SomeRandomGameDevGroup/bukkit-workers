@@ -1,4 +1,4 @@
-package org.randomgd.bukkit.workers;
+package org.randomgd.bukkit.workers.info;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -29,16 +29,10 @@ public class GolemInfo implements WorkerInfo {
 	private int torch;
 
 	/**
-	 * Glowstone count.
-	 */
-	private int glowstone;
-
-	/**
 	 * Constructor.
 	 */
 	public GolemInfo() {
 		torch = 0;
-		glowstone = 0;
 	}
 
 	/**
@@ -53,23 +47,12 @@ public class GolemInfo implements WorkerInfo {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public boolean canWork() {
-		return (torch > 0) || (glowstone > 0);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public boolean give(Material material) {
+	public boolean give(Material material, Player player) {
 		boolean result = true;
 
 		switch (material) {
 		case TORCH:
 			++torch;
-			break;
-		case GLOWSTONE:
-			++glowstone;
 			break;
 		default:
 			result = false;
@@ -81,9 +64,8 @@ public class GolemInfo implements WorkerInfo {
 
 	@Override
 	public void perform(Entity entity, int x, int y, int z, World world) {
-		// TODO Glowstone.
 		if (torch > 0) {
-			// Light up the place with torches or glowstone.
+			// Light up the place with torches.
 			Block block = world.getBlockAt(x, y, z);
 			Block beyond = world.getBlockAt(x, y - 1, z);
 			byte lightLevel = block.getLightFromBlocks();

@@ -1,4 +1,4 @@
-package org.randomgd.bukkit.workers;
+package org.randomgd.bukkit.workers.info;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -9,6 +9,8 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.randomgd.bukkit.workers.ChestHandler;
+import org.randomgd.bukkit.workers.ToolUsage;
 
 /**
  * Information about a librarian activity and inventory.
@@ -64,15 +66,7 @@ public class LibrarianInfo implements WorkerInfo {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public boolean canWork() {
-		return tool > 0;
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public boolean give(Material material) {
+	public boolean give(Material material, Player player) {
 		boolean result = true;
 		switch (material) {
 		case SUGAR_CANE:
@@ -96,6 +90,26 @@ public class LibrarianInfo implements WorkerInfo {
 		case LOG:
 			++wood;
 			break;
+		case GOLD_NUGGET: {
+			if (book > 0) {
+				int amount = book;
+				if (amount > 64) {
+					amount = 64;
+				}
+				ItemStack drop = new ItemStack(Material.BOOK, amount);
+				book -= amount;
+				Inventory inventory = player.getInventory();
+				int slot = inventory.firstEmpty();
+				if (slot >= 0) {
+					inventory.setItem(slot, drop);
+				} else {
+					result = false;
+				}
+			} else {
+				result = false;
+			}
+			break;
+		}
 		default:
 			result = false;
 			break;

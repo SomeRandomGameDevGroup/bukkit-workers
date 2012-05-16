@@ -1,4 +1,4 @@
-package org.randomgd.bukkit.workers;
+package org.randomgd.bukkit.workers.info;
 
 import java.io.Serializable;
 
@@ -21,18 +21,15 @@ public interface WorkerInfo extends Serializable {
 	void printInfoToPlayer(Player player);
 
 	/**
-	 * @return <code>true</code> if the worker can work.
-	 */
-	boolean canWork();
-
-	/**
 	 * Give something to the worker.
 	 * 
 	 * @param material
 	 *            item to give.
+	 * @param player
+	 *            Player with which the worker interacts.
 	 * @return <code>true</code> if it accepts it.
 	 */
-	boolean give(Material material);
+	boolean give(Material material, Player player);
 
 	/**
 	 * Performs worker task.

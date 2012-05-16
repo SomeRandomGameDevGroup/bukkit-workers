@@ -7,6 +7,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.UUID;
 
@@ -25,6 +26,9 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.randomgd.bukkit.workers.info.FarmerInfo;
+import org.randomgd.bukkit.workers.info.GolemInfo;
+import org.randomgd.bukkit.workers.info.WorkerInfo;
 
 /**
  * Just a bunch of test.
@@ -97,8 +101,6 @@ public class WorkerHandler extends JavaPlugin implements Listener, Runnable {
 				if (!dataFile.exists()) {
 					dataFile.createNewFile();
 				}
-				System.out.println("Try to write at "
-						+ dataFile.getAbsolutePath());
 				ObjectOutputStream output = new ObjectOutputStream(
 						new FileOutputStream(dataFile));
 				output.writeObject(workerStack);
@@ -112,6 +114,13 @@ public class WorkerHandler extends JavaPlugin implements Listener, Runnable {
 			}
 		}
 	}
+
+//	@EventHandler
+//	public void onPlayerInteract(PlayerInteractEvent event) {
+//		event.getPlayer().sendMessage(
+//				ChatColor.BLUE + "Block " + event.getClickedBlock() + " ("
+//						+ event.getClickedBlock().getData() + ")");
+//	}
 
 	@EventHandler
 	public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {
@@ -127,23 +136,9 @@ public class WorkerHandler extends JavaPlugin implements Listener, Runnable {
 			Villager.Profession profession = null;
 			WorkerInfo info = null;
 			switch (material) {
-			case LEATHER:
-				profession = Villager.Profession.BUTCHER;
-				break;
-			case IRON_INGOT:
-				profession = Villager.Profession.BLACKSMITH;
-				// TODO info = new BlacksmithInfo();
-				break;
-			case BOOK:
-				profession = Villager.Profession.LIBRARIAN;
-				info = new LibrarianInfo();
-				break;
 			case WHEAT:
 				profession = Villager.Profession.FARMER;
 				info = new FarmerInfo();
-				break;
-			case GOLD_INGOT:
-				profession = Villager.Profession.PRIEST;
 				break;
 			case STICK: {
 				WorkerInfo currentInfo = workerStack
@@ -197,7 +192,7 @@ public class WorkerHandler extends JavaPlugin implements Listener, Runnable {
 
 	private void give(WorkerInfo info, Player player, ItemStack stack,
 			Material material) {
-		if (info.give(material)) {
+		if (info.give(material, player)) {
 			int sAmount = stack.getAmount();
 			stack.setAmount(sAmount - 1);
 			player.setItemInHand(stack);
@@ -219,8 +214,12 @@ public class WorkerHandler extends JavaPlugin implements Listener, Runnable {
 		Collection<T> entities = world.getEntitiesByClass(api); // ## Really ?
 																// Like
 																// this ?
+		Collection<T> browseable = new LinkedList<T>(); // Avoid concurrent
+														// modification.
+		browseable.addAll(entities);
+
 		// ## No overcost compared to using the workerInfo keys ?
-		for (T i : entities) {
+		for (T i : browseable) {
 			// Look at the surrounding.
 			UUID id = i.getUniqueId();
 			WorkerInfo info = workerStack.get(id);
@@ -233,5 +232,7 @@ public class WorkerHandler extends JavaPlugin implements Listener, Runnable {
 				info.perform(i, x, y, z, world);
 			}
 		}
+
+		browseable.clear();
 	}
 }

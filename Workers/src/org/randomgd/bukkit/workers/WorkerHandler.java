@@ -14,6 +14,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.IronGolem;
@@ -43,13 +44,16 @@ public class WorkerHandler extends JavaPlugin implements Listener, Runnable {
 	@SuppressWarnings("unchecked")
 	@Override
 	public void onEnable() {
+		FileConfiguration configuration = getConfig();
+
+		// Get configuration.
+		int period = configuration.getInt("period");
+
 		getServer().getPluginManager().registerEvents(this, this);
 		getServer().getScheduler().scheduleAsyncRepeatingTask(this, this, 10,
-				150);
+				period);
 		// Populate the worker map.
 		File directory = getDataFolder();
-		System.out
-				.println("Data Directory is : " + directory.getAbsolutePath());
 		if (!directory.exists()) {
 			directory.mkdir();
 		}

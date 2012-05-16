@@ -132,6 +132,7 @@ public class WorkerHandler extends JavaPlugin implements Listener, Runnable {
 				break;
 			case IRON_INGOT:
 				profession = Villager.Profession.BLACKSMITH;
+				// TODO info = new BlacksmithInfo();
 				break;
 			case BOOK:
 				profession = Villager.Profession.LIBRARIAN;
@@ -151,7 +152,7 @@ public class WorkerHandler extends JavaPlugin implements Listener, Runnable {
 					currentInfo.printInfoToPlayer(player);
 				} else {
 					player.sendMessage(ChatColor.GRAY
-							+ "This villager is not a worker");
+							+ "This villager is not a worker.");
 				}
 				break;
 			}

@@ -43,8 +43,21 @@ public class LibrarianInfo implements WorkerInfo {
 	 */
 	@Override
 	public void printInfoToPlayer(Player player) {
-		player.sendMessage(ChatColor.GRAY
-				+ "I'm a librarian (so please, be quiet).");
+		// ## It should be better to pre-build the information string, store it
+		// and use a string mutualizer to avoid memory consumption ...
+		StringBuffer buffer = new StringBuffer();
+		buffer.append(ChatColor.GRAY);
+		buffer.append("I'm a librarian.");
+		if (tool > 0) {
+			buffer.append(" I can cut some wood.");
+		}
+		if (cane > 0) {
+			buffer.append(" I carry some sugar cane.");
+		}
+		if (book > 0) {
+			buffer.append(" I have some book to deposit.");
+		}
+		player.sendMessage(buffer.toString());
 	}
 
 	/**

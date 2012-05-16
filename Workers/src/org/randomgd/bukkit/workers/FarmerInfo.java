@@ -150,9 +150,21 @@ public class FarmerInfo implements WorkerInfo {
 	 */
 	@Override
 	public void printInfoToPlayer(Player player) {
-		player.sendMessage(ChatColor.GRAY + "I'm a farmer."
-				+ ((tool > 0) ? " I've got a tool." : " But I can't work !")
-				+ " (" + tool + ")");
+		StringBuffer buffer = new StringBuffer();
+		buffer.append(ChatColor.GRAY);
+		buffer.append("I'm a farmer.");
+		if (tool > 0) {
+			buffer.append("I've got tools");
+			if (seed > 0) {
+				buffer.append(" and seeds.");
+			} else {
+				buffer.append("but no seed.");
+			}
+		}
+		if (wheat > 0 || melon > 0 || pumpkin > 0) {
+			buffer.append(" I have stuff to deposit.");
+		}
+		player.sendMessage(buffer.toString());
 	}
 
 	/**
@@ -198,7 +210,7 @@ public class FarmerInfo implements WorkerInfo {
 		// A farmer can operate on blocks around him, at its level up to two
 		// level up.
 		if (y > 252) { // Magic number
-			// A farmer which is too high can operate.
+			// A farmer which is too high to operate.
 			return;
 		}
 		makeFarmWork(x, y, z, world);

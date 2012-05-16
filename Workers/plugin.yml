@@ -1,3 +1,7 @@
 name: UsefulVillagers
+version: 0.1.3
+author: Some Random Gamedev
+website: http://dev.bukkit.org/server-mods/usefulvillagers/
+
 main: org.randomgd.bukkit.workers.WorkerHandler
-version: 0.1.2
+

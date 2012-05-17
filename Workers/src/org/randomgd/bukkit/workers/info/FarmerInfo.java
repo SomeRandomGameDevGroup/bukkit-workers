@@ -66,7 +66,7 @@ public class FarmerInfo implements WorkerInfo {
 	 * can !
 	 */
 	private boolean wheatLove;
-	
+
 	private transient int horizontalScan;
 
 	private transient int verticalBelow;
@@ -329,23 +329,26 @@ public class FarmerInfo implements WorkerInfo {
 					case DIRT:
 					case GRASS:
 					case SOIL:
-						doEarthWork(world, xA, zA, yA, block, material,
-								lastMarker);
-						lastMarker = null;
+						if (doEarthWork(world, xA, zA, yA, block, material,
+								lastMarker)) {
+							lastMarker = null;
+						}
 						break;
 					case SAND: {
 						if (Material.SANDSTONE.equals(lastMarker)) {
 							Block above = world.getBlockAt(xA, yA + 1, zA);
 							Material aboveMaterial = above.getType();
 
-							plantSugarCane(block, material, above,
-									aboveMaterial);
+							if (plantSugarCane(block, material, above,
+									aboveMaterial)) {
+								lastMarker = null;
+							}
 						}
-						lastMarker = null;
 						break;
 					}
 					case LOG: {
-						if ((metaData == 2) && (axe > 0)) {
+						if (Material.WOOD.equals(lastMarker) && (metaData == 2)
+								&& (axe > 0)) {
 							// Time to cut wood. But not like a dumbass.
 							// First, look for the top.
 							int topLocation;
@@ -525,8 +528,9 @@ public class FarmerInfo implements WorkerInfo {
 		return result;
 	}
 
-	private void doEarthWork(World world, int xA, int zA, int yA, Block block,
-			Material material, Material lastMarker) {
+	private boolean doEarthWork(World world, int xA, int zA, int yA,
+			Block block, Material material, Material lastMarker) {
+		boolean result = false;
 		if (wheatLove && (lastMarker == null)) {
 			lastMarker = Material.GRAVEL;
 		}
@@ -545,6 +549,7 @@ public class FarmerInfo implements WorkerInfo {
 						--wheatSeed;
 						above.setType(Material.CROPS);
 						above.setData((byte) 0);
+						result = true;
 					}
 				}
 				break;
@@ -559,6 +564,7 @@ public class FarmerInfo implements WorkerInfo {
 						--melonSeed;
 						above.setType(Material.MELON_STEM);
 						above.setData((byte) 0);
+						result = true;
 					}
 				}
 				break;
@@ -573,13 +579,14 @@ public class FarmerInfo implements WorkerInfo {
 						--pumpkinSeed;
 						above.setType(Material.PUMPKIN_STEM);
 						above.setData((byte) 0);
+						result = true;
 					}
 				}
 				break;
 			}
 			case SANDSTONE: // Sugar cane work.
 			{
-				plantSugarCane(block, material, above, aboveMaterial);
+				result = plantSugarCane(block, material, above, aboveMaterial);
 				break;
 			}
 			case WOOD: // Plant tree.
@@ -590,6 +597,7 @@ public class FarmerInfo implements WorkerInfo {
 					--sapling;
 					above.setType(Material.SAPLING);
 					above.setData((byte) 2);
+					result = true;
 				}
 				break;
 			}
@@ -597,10 +605,12 @@ public class FarmerInfo implements WorkerInfo {
 				break;
 			}
 		}
+		return result;
 	}
 
-	private void plantSugarCane(Block block, Material material, Block above,
+	private boolean plantSugarCane(Block block, Material material, Block above,
 			Material aboveMaterial) {
+		boolean result = false;
 		if (sugarCane > 0) {
 			boolean ready = cleanBlockForCane(block, material, above,
 					aboveMaterial);
@@ -609,8 +619,10 @@ public class FarmerInfo implements WorkerInfo {
 				--sugarCane;
 				above.setType(Material.SUGAR_CANE_BLOCK);
 				above.setData((byte) 0);
+				result = true;
 			}
 		}
+		return result;
 	}
 
 	private boolean cleanBlockForCane(Block block, Material material,

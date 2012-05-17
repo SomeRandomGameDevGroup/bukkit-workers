@@ -1,4 +1,4 @@
-package org.randomgd.bukkit.workers;
+package org.randomgd.bukkit.workers.util;
 
 import org.bukkit.Material;
 import org.bukkit.block.Chest;

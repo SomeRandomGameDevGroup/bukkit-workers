@@ -6,6 +6,7 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.randomgd.bukkit.workers.util.Configuration;
 
 /**
  * Information for a golem.
@@ -75,6 +76,11 @@ public class GolemInfo implements WorkerInfo {
 				--torch;
 			}
 		}
+	}
+
+	@Override
+	public void setConfiguration(Configuration cnf) {
+		// Golem Strong ! Golem no need configuration !
 	}
 
 }

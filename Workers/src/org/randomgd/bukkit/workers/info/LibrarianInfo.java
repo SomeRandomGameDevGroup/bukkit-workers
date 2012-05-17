@@ -9,8 +9,9 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.randomgd.bukkit.workers.ChestHandler;
 import org.randomgd.bukkit.workers.ToolUsage;
+import org.randomgd.bukkit.workers.util.ChestHandler;
+import org.randomgd.bukkit.workers.util.Configuration;
 
 /**
  * Information about a librarian activity and inventory.
@@ -259,5 +260,10 @@ public class LibrarianInfo implements WorkerInfo {
 				}
 			}
 		}
+	}
+
+	@Override
+	public void setConfiguration(Configuration cnf) {
+		// TODO ...
 	}
 }

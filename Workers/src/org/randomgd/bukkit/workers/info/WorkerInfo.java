@@ -6,6 +6,7 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.randomgd.bukkit.workers.util.Configuration;
 
 /**
  * Generic interface for worker information.
@@ -46,5 +47,13 @@ public interface WorkerInfo extends Serializable {
 	 *            Hosting world.
 	 */
 	void perform(Entity entity, int x, int y, int z, World world);
+
+	/**
+	 * Set the plugin shared configuration.
+	 * 
+	 * @param cnf
+	 *            Ugly configuration structure.
+	 */
+	void setConfiguration(Configuration cnf);
 
 }

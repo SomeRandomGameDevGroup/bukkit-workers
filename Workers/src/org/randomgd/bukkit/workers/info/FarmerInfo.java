@@ -9,8 +9,9 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.randomgd.bukkit.workers.ChestHandler;
 import org.randomgd.bukkit.workers.ToolUsage;
+import org.randomgd.bukkit.workers.util.ChestHandler;
+import org.randomgd.bukkit.workers.util.Configuration;
 
 /**
  * Information about a farmer activity and inventory.
@@ -39,7 +40,7 @@ public class FarmerInfo implements WorkerInfo {
 	// Amount of melon seed.
 	private int melonSeed;
 
-	// Amount of pumkin.
+	// Amount of pumpkin.
 	private int pumpkin;
 
 	// Amount of pumpkin seed.
@@ -61,6 +62,18 @@ public class FarmerInfo implements WorkerInfo {
 	private int sugarCane;
 
 	/**
+	 * if true, the farmer ignore gravel markers and plant wheat EVERYWHERE it
+	 * can !
+	 */
+	private boolean wheatLove;
+	
+	private transient int horizontalScan;
+
+	private transient int verticalBelow;
+
+	private transient int verticalAbove;
+
+	/**
 	 * Constructor.
 	 */
 	public FarmerInfo() {
@@ -74,6 +87,7 @@ public class FarmerInfo implements WorkerInfo {
 		sapling = 0;
 		hoe = 0;
 		axe = 0;
+		wheatLove = false;
 	}
 
 	private void makeDeposit(Chest chest) {
@@ -102,14 +116,18 @@ public class FarmerInfo implements WorkerInfo {
 	public void printInfoToPlayer(Player player) {
 		StringBuffer buffer = new StringBuffer();
 		buffer.append(ChatColor.GRAY);
-		buffer.append("I'm a farmer.");
+		if (wheatLove) {
+			buffer.append("I'm a wheat lover.");
+		} else {
+			buffer.append("I'm a farmer.");
+		}
 		if (hoe > 0) {
 			buffer.append(" I can make soil.");
 		}
 		if (axe > 0) {
 			buffer.append(" I can cut trees.");
 		}
-		if (wheat > 0 || melon > 0 || pumpkin > 0 || sugarCane > 0) {
+		if (wheat > 0 || melon > 0 || pumpkin > 0 || sugarCane > 0 || wood > 0) {
 			buffer.append(" I have stuff to deposit.");
 		}
 		player.sendMessage(buffer.toString());
@@ -186,6 +204,18 @@ public class FarmerInfo implements WorkerInfo {
 			result = false;
 			break;
 		}
+		case WHEAT: {
+			wheatLove = !wheatLove;
+			if (wheatLove) {
+				player.sendMessage(ChatColor.GRAY
+						+ "Let's grow wheat EVERYWHERE !");
+			} else {
+				player.sendMessage(ChatColor.GRAY
+						+ "Let's act as a regular farmer.");
+			}
+			result = false;
+			break;
+		}
 		default:
 			result = false;
 			break;
@@ -206,12 +236,14 @@ public class FarmerInfo implements WorkerInfo {
 		// The strategy is simple. We check block from bottom to top.
 		// If a marker is encountered, it will set conditions for further
 		// actions.
-		for (int xOffset = -2; xOffset < 3; ++xOffset) {
+		// ## From an optimization point of view : should it be better to store
+		// the loop bounds in final variable ?
+		for (int xOffset = -horizontalScan; xOffset <= horizontalScan; ++xOffset) {
 			int xA = x + xOffset;
-			for (int zOffset = -2; zOffset < 3; ++zOffset) {
+			for (int zOffset = -horizontalScan; zOffset <= horizontalScan; ++zOffset) {
 				int zA = z + zOffset;
 				Material lastMarker = null;
-				for (int yOffset = -2; yOffset < 3; ++yOffset) {
+				for (int yOffset = -verticalBelow; yOffset <= verticalAbove; ++yOffset) {
 					int yA = y + yOffset;
 					Block block = world.getBlockAt(xA, yA, zA);
 					Material material = block.getType();
@@ -313,7 +345,7 @@ public class FarmerInfo implements WorkerInfo {
 						break;
 					}
 					case LOG: {
-						if (metaData == 2) {
+						if ((metaData == 2) && (axe > 0)) {
 							// Time to cut wood. But not like a dumbass.
 							// First, look for the top.
 							int topLocation;
@@ -327,9 +359,10 @@ public class FarmerInfo implements WorkerInfo {
 								}
 							}
 							// And now, chop the wood !
-							for (int yB = topLocation; (yB >= yA) && (axe > 0); --yB, --axe) {
+							for (int yB = topLocation; (yB >= yA) && (axe > 0); --yB) {
 								Block toCut = world.getBlockAt(xA, yB, zA);
 								toCut.setType(Material.AIR);
+								--axe;
 								++wood;
 							}
 							block.setType(Material.SAPLING);
@@ -494,6 +527,9 @@ public class FarmerInfo implements WorkerInfo {
 
 	private void doEarthWork(World world, int xA, int zA, int yA, Block block,
 			Material material, Material lastMarker) {
+		if (wheatLove && (lastMarker == null)) {
+			lastMarker = Material.GRAVEL;
+		}
 		if (lastMarker != null) {
 			Block above = world.getBlockAt(xA, yA + 1, zA);
 			Material aboveMaterial = above.getType();
@@ -617,6 +653,13 @@ public class FarmerInfo implements WorkerInfo {
 			ready = !Material.CROPS.equals(aboveMaterial);
 		}
 		return ready;
+	}
+
+	@Override
+	public void setConfiguration(Configuration cnf) {
+		horizontalScan = cnf.getHorizontalRange();
+		verticalAbove = cnf.getVerticalAbove();
+		verticalBelow = cnf.getVerticalBelow();
 	}
 
 }

@@ -29,12 +29,41 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.randomgd.bukkit.workers.info.FarmerInfo;
 import org.randomgd.bukkit.workers.info.GolemInfo;
 import org.randomgd.bukkit.workers.info.WorkerInfo;
+import org.randomgd.bukkit.workers.util.Configuration;
+import org.randomgd.bukkit.workers.util.WorkerCreator;
 
 /**
  * Just a bunch of test.
  */
 public class WorkerHandler extends JavaPlugin implements Listener, Runnable {
 
+	/**
+	 * Message displayed if the player doesn't have the permission to interact
+	 * with the villagers.
+	 */
+	private static final String NO_PERMISSION_MESSAGE = ChatColor.RED
+			+ "You can't assign jobs to villagers";
+
+	/**
+	 * Message displayed if trying to interact with a villager that is not
+	 * "useful".
+	 */
+	private static final String NOT_USEFUL_VILLAGER = ChatColor.GRAY
+			+ "This is not a useful villager.";
+
+	/**
+	 * A map between item and the triggered/chosen profession.
+	 */
+	private static final Map<Material, WorkerCreator> PROFESSION_TRIGGER = new HashMap<Material, WorkerCreator>();
+	{
+		PROFESSION_TRIGGER.put(Material.WHEAT, new WorkerCreator(
+				Villager.Profession.FARMER, FarmerInfo.class, ChatColor.GRAY
+						+ "This villager is now a farmer."));
+	}
+
+	/**
+	 * Workers informations.
+	 */
 	private Map<UUID, WorkerInfo> workerStack;
 
 	/**
@@ -45,17 +74,31 @@ public class WorkerHandler extends JavaPlugin implements Listener, Runnable {
 		workerStack = new HashMap<UUID, WorkerInfo>();
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public void onEnable() {
 		FileConfiguration configuration = getConfig();
 
 		// Get configuration.
 		int period = configuration.getInt("period");
+		Configuration configurationHandler = new Configuration(configuration);
 
+		// Get worker information from disk.
+		getWorkerInfoFromDisk();
+
+		// Update the worker information with configuration.
+		for (WorkerInfo i : workerStack.values()) {
+			i.setConfiguration(configurationHandler);
+		}
+
+		// Launch the BEAST !
 		getServer().getPluginManager().registerEvents(this, this);
 		getServer().getScheduler().scheduleAsyncRepeatingTask(this, this, 10,
 				period);
+
+	}
+
+	@SuppressWarnings("unchecked")
+	private void getWorkerInfoFromDisk() {
 		// Populate the worker map.
 		File directory = getDataFolder();
 		if (!directory.exists()) {
@@ -115,68 +158,50 @@ public class WorkerHandler extends JavaPlugin implements Listener, Runnable {
 		}
 	}
 
-//	@EventHandler
-//	public void onPlayerInteract(PlayerInteractEvent event) {
-//		event.getPlayer().sendMessage(
-//				ChatColor.BLUE + "Block " + event.getClickedBlock() + " ("
-//						+ event.getClickedBlock().getData() + ")");
-//	}
-
 	@EventHandler
 	public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {
+		Player player = event.getPlayer();
+
+		if (!player.hasPermission("jobassign")) {
+			player.sendMessage(NO_PERMISSION_MESSAGE);
+			return;
+		}
+
 		Entity entity = event.getRightClicked();
 		EntityType entityType = entity.getType();
-		Player player = event.getPlayer();
 		ItemStack stack = player.getItemInHand();
 		Material material = stack.getType();
 
 		if (entityType.equals(EntityType.VILLAGER)) {
 			Villager villager = (Villager) entity;
+			UUID id = villager.getUniqueId();
+			WorkerInfo info = workerStack.get(id);
+			boolean reassign = true;
+			if (info != null) {
+				reassign = !give(info, player, stack, material);
+			}
 
-			Villager.Profession profession = null;
-			WorkerInfo info = null;
-			switch (material) {
-			case WHEAT:
-				profession = Villager.Profession.FARMER;
-				info = new FarmerInfo();
-				break;
-			case STICK: {
-				WorkerInfo currentInfo = workerStack
-						.get(villager.getUniqueId());
-				if (currentInfo != null) {
-					currentInfo.printInfoToPlayer(player);
-				} else {
-					player.sendMessage(ChatColor.GRAY
-							+ "This villager is not a worker.");
+			if (reassign) {
+				WorkerCreator creator = PROFESSION_TRIGGER.get(material);
+				if (creator != null) {
+					Villager.Profession profession = creator.getProfession();
+					if ((profession != null)
+							&& (!(profession.equals(villager.getProfession()) && (info != null)))) {
+						// It's ok, we can convert it !
+						info = creator.create();
+						workerStack.put(id, info);
+						player.sendMessage(creator.getMessage());
+					}
 				}
-				break;
 			}
-			default: {
-				WorkerInfo currentInfo = workerStack
-						.get(villager.getUniqueId());
-				if (currentInfo != null) {
-					give(currentInfo, player, stack, material);
-				}
-				break;
-			}
-			}
-			if (profession != null) {
-				Villager.Profession oldProf = villager.getProfession();
-				UUID id = villager.getUniqueId();
-				boolean reset = (!workerStack.containsKey(id))
-						|| (oldProf != profession);
-				if (reset) {
-					player.sendMessage(ChatColor.GRAY
-							+ "Set this villager as a " + profession);
-					workerStack.put(id, info);
-					villager.setProfession(profession);
-				}
+
+			if (info == null) {
+				player.sendMessage(NOT_USEFUL_VILLAGER);
 			}
 		} else if (entityType.equals(EntityType.IRON_GOLEM)) {
 			UUID uuid = entity.getUniqueId();
 			WorkerInfo currentInfo = workerStack.get(uuid);
-			if (material.equals(Material.TORCH)
-					|| (material.equals(Material.GLOWSTONE))) {
+			if (material.equals(Material.TORCH)) {
 				if (currentInfo == null) {
 					currentInfo = new GolemInfo();
 					workerStack.put(uuid, currentInfo);
@@ -190,13 +215,16 @@ public class WorkerHandler extends JavaPlugin implements Listener, Runnable {
 		}
 	}
 
-	private void give(WorkerInfo info, Player player, ItemStack stack,
+	private boolean give(WorkerInfo info, Player player, ItemStack stack,
 			Material material) {
-		if (info.give(material, player)) {
+		boolean result = info.give(material, player);
+
+		if (result) {
 			int sAmount = stack.getAmount();
 			stack.setAmount(sAmount - 1);
 			player.setItemInHand(stack);
 		}
+		return result;
 	}
 
 	@Override

@@ -28,44 +28,66 @@ public class FarmerInfo implements WorkerInfo {
 	 */
 	private static int MAX_AMOUNT = 64;
 
-	// Amount of stored wheat.
+	/**
+	 * Amount of stored wheat.
+	 */
 	private int wheat;
 
-	// Amount of stored wheat seed.
+	/**
+	 * Amount of stored wheat seed.
+	 */
 	private int wheatSeed;
 
-	// Amount of melon slice.
+	/**
+	 * Amount of melon slice.
+	 */
 	private int melon;
 
-	// Amount of melon seed.
+	/**
+	 * Amount of melon seed.
+	 */
 	private int melonSeed;
 
-	// Amount of pumpkin.
+	/**
+	 * Amount of pumpkin.
+	 */
 	private int pumpkin;
 
-	// Amount of pumpkin seed.
+	/**
+	 * Amount of pumpkin seed.
+	 */
 	private int pumpkinSeed;
 
-	// Wood log.
+	/**
+	 * Wood log.
+	 */
 	private int wood;
 
-	// Sapling.
+	/**
+	 * Sapling.
+	 */
 	private int sapling;
 
-	// If >0, can create soil.
+	/**
+	 * If >0, can create soil.
+	 */
 	private int hoe;
 
-	// If >0, can cut wood.
+	/**
+	 * If >0, can cut wood.
+	 */
 	private int axe;
 
-	// Amount of sugar cane.
+	/**
+	 * Amount of sugar cane.
+	 */
 	private int sugarCane;
 
 	/**
-	 * if true, the farmer ignore gravel markers and plant wheat EVERYWHERE it
-	 * can !
+	 * Override marker. Allows specializing farmer into a seeder or a
+	 * lumberjack.
 	 */
-	private boolean wheatLove;
+	private Material overrideMarker;
 
 	private transient int horizontalScan;
 
@@ -87,7 +109,7 @@ public class FarmerInfo implements WorkerInfo {
 		sapling = 0;
 		hoe = 0;
 		axe = 0;
-		wheatLove = false;
+		overrideMarker = null;
 	}
 
 	private void makeDeposit(Chest chest) {
@@ -116,10 +138,14 @@ public class FarmerInfo implements WorkerInfo {
 	public void printInfoToPlayer(Player player) {
 		StringBuffer buffer = new StringBuffer();
 		buffer.append(ChatColor.GRAY);
-		if (wheatLove) {
-			buffer.append("I'm a wheat lover.");
-		} else {
+		if (overrideMarker == null) {
 			buffer.append("I'm a farmer.");
+		} else {
+			if (overrideMarker.equals(Material.GRAVEL)) {
+				buffer.append("I'm a seeder.");
+			} else {
+				buffer.append("I'm a lumberjack.");
+			}
 		}
 		if (hoe > 0) {
 			buffer.append(" I can make soil.");
@@ -205,22 +231,36 @@ public class FarmerInfo implements WorkerInfo {
 			break;
 		}
 		case WHEAT: {
-			wheatLove = !wheatLove;
-			if (wheatLove) {
-				player.sendMessage(ChatColor.GRAY
-						+ "Let's grow wheat EVERYWHERE !");
-			} else {
-				player.sendMessage(ChatColor.GRAY
-						+ "Let's act as a regular farmer.");
-			}
+			applyOverrideMarker(player, Material.GRAVEL,
+					"Let's grow wheat everywhere !");
 			result = false;
 			break;
+		}
+		case SAPLING: {
+			applyOverrideMarker(player, Material.WOOD,
+					"Let's cut all birch trees !");
+			result = false;
 		}
 		default:
 			result = false;
 			break;
 		}
 		return result;
+	}
+
+	private void applyOverrideMarker(Player player, Material targetMarker,
+			String message) {
+		if (targetMarker.equals(overrideMarker)) {
+			overrideMarker = null;
+		} else {
+			overrideMarker = targetMarker;
+		}
+		if (overrideMarker != null) {
+			player.sendMessage(ChatColor.GRAY + message);
+		} else {
+			player.sendMessage(ChatColor.GRAY
+					+ "Let's act as a regular farmer.");
+		}
 	}
 
 	@Override
@@ -347,7 +387,9 @@ public class FarmerInfo implements WorkerInfo {
 						break;
 					}
 					case LOG: {
-						if (Material.WOOD.equals(lastMarker) && (metaData == 2)
+						if ((Material.WOOD.equals(lastMarker) || Material.WOOD
+								.equals(overrideMarker))
+								&& (metaData == 2)
 								&& (axe > 0)) {
 							// Time to cut wood. But not like a dumbass.
 							// First, look for the top.
@@ -531,8 +573,8 @@ public class FarmerInfo implements WorkerInfo {
 	private boolean doEarthWork(World world, int xA, int zA, int yA,
 			Block block, Material material, Material lastMarker) {
 		boolean result = false;
-		if (wheatLove && (lastMarker == null)) {
-			lastMarker = Material.GRAVEL;
+		if ((overrideMarker != null) && (lastMarker == null)) {
+			lastMarker = overrideMarker;
 		}
 		if (lastMarker != null) {
 			Block above = world.getBlockAt(xA, yA + 1, zA);

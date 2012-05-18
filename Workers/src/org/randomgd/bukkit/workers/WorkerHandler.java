@@ -28,6 +28,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.randomgd.bukkit.workers.info.FarmerInfo;
 import org.randomgd.bukkit.workers.info.GolemInfo;
+import org.randomgd.bukkit.workers.info.LibrarianInfo;
 import org.randomgd.bukkit.workers.info.WorkerInfo;
 import org.randomgd.bukkit.workers.util.Configuration;
 import org.randomgd.bukkit.workers.util.WorkerCreator;
@@ -39,10 +40,17 @@ public class WorkerHandler extends JavaPlugin implements Listener, Runnable {
 
 	/**
 	 * Message displayed if the player doesn't have the permission to interact
-	 * with the villagers.
+	 * with the villagers for job assignment.
 	 */
-	private static final String NO_PERMISSION_MESSAGE = ChatColor.RED
+	private static final String NO_JOB_PERMISSION_MESSAGE = ChatColor.RED
 			+ "You can't assign jobs to villagers";
+
+	/**
+	 * Message displayed if the player doesn't have the permission to give
+	 * something to the villagers.
+	 */
+	private static final String NO_GIVE_PERMISSION_MESSAGE = ChatColor.RED
+			+ "You're not allow to give items to villagers";
 
 	/**
 	 * Message displayed if trying to interact with a villager that is not
@@ -57,8 +65,12 @@ public class WorkerHandler extends JavaPlugin implements Listener, Runnable {
 	private static final Map<Material, WorkerCreator> PROFESSION_TRIGGER = new HashMap<Material, WorkerCreator>();
 	{
 		PROFESSION_TRIGGER.put(Material.WHEAT, new WorkerCreator(
-				Villager.Profession.FARMER, FarmerInfo.class, ChatColor.GRAY
-						+ "This villager is now a farmer."));
+				Villager.Profession.FARMER, FarmerInfo.class,
+				ChatColor.DARK_GRAY + "This villager is now a farmer."));
+
+		PROFESSION_TRIGGER.put(Material.BOOK, new WorkerCreator(
+				Villager.Profession.LIBRARIAN, LibrarianInfo.class,
+				ChatColor.DARK_GRAY + "This villager is now a librarian."));
 	}
 
 	/**
@@ -94,7 +106,6 @@ public class WorkerHandler extends JavaPlugin implements Listener, Runnable {
 		getServer().getPluginManager().registerEvents(this, this);
 		getServer().getScheduler().scheduleAsyncRepeatingTask(this, this, 10,
 				period);
-
 	}
 
 	@SuppressWarnings("unchecked")
@@ -162,11 +173,6 @@ public class WorkerHandler extends JavaPlugin implements Listener, Runnable {
 	public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {
 		Player player = event.getPlayer();
 
-		if (!player.hasPermission("usefulvillagers.jobassign")) {
-			player.sendMessage(NO_PERMISSION_MESSAGE);
-			return;
-		}
-
 		Entity entity = event.getRightClicked();
 		EntityType entityType = entity.getType();
 		ItemStack stack = player.getItemInHand();
@@ -178,6 +184,10 @@ public class WorkerHandler extends JavaPlugin implements Listener, Runnable {
 			WorkerInfo info = workerStack.get(id);
 			boolean reassign = true;
 			if (info != null) {
+				if (!player.hasPermission("usefulvillagers.give")) {
+					player.sendMessage(NO_GIVE_PERMISSION_MESSAGE);
+					return;
+				}
 				reassign = !give(info, player, stack, material);
 			}
 
@@ -188,6 +198,11 @@ public class WorkerHandler extends JavaPlugin implements Listener, Runnable {
 					if ((profession != null)
 							&& (!(profession.equals(villager.getProfession()) && (info != null)))) {
 						// It's ok, we can convert it !
+						if (!player.hasPermission("usefulvillagers.jobassign")) {
+							player.sendMessage(NO_JOB_PERMISSION_MESSAGE);
+							return;
+						}
+						villager.setProfession(profession);
 						info = creator.create();
 						workerStack.put(id, info);
 						player.sendMessage(creator.getMessage());

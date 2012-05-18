@@ -313,7 +313,7 @@ public class FarmerInfo implements WorkerInfo {
 						// Markers are only for tool use.
 						if (metaData == (byte) 7) { // Ready to harvest.
 							++wheat;
-							wheatSeed += (int) Math.random() * 2;
+							wheatSeed += (int) (Math.random() * 2);
 							if (wheatSeed > MAX_AMOUNT) {
 								wheatSeed = MAX_AMOUNT;
 							}
@@ -349,7 +349,7 @@ public class FarmerInfo implements WorkerInfo {
 						// We lower the slice amount, but automatically add
 						// a chance to get a melon seed.
 						block.setType(Material.AIR);
-						melon += 1 + ((int) Math.random() * 6);
+						melon += 1 + (int) (Math.random() * 6);
 						melonSeed += (int) (Math.random() * 1.5);
 						if (melonSeed > MAX_AMOUNT) {
 							melonSeed = MAX_AMOUNT;

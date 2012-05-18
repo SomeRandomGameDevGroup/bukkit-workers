@@ -7,6 +7,10 @@ main: org.randomgd.bukkit.workers.WorkerHandler
 
 permissions:
     usefulvillagers.jobassign:
-       description: Give access to villager interaction.
+       description: Give access to villager job selection.
        default: op
+    usefulvillagers.give:
+       description: Give access to player donation to villagers.
+       default: true
+
 

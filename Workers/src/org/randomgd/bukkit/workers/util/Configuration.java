@@ -15,6 +15,8 @@ public final class Configuration {
 
 	private int verticalAbove;
 
+	private int librarianRange;
+
 	/**
 	 * Constructor.
 	 * 
@@ -25,6 +27,7 @@ public final class Configuration {
 		horizontalRange = configuration.getInt("horizontalrange");
 		verticalBelow = configuration.getInt("verticalbelow");
 		verticalAbove = configuration.getInt("verticalabove");
+		librarianRange = configuration.getInt("librarianrange");
 	}
 
 	public final int getHorizontalRange() {
@@ -37,6 +40,10 @@ public final class Configuration {
 
 	public final int getVerticalAbove() {
 		return verticalAbove;
+	}
+
+	public final int getLibrarianRange() {
+		return librarianRange;
 	}
 
 }

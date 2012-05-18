@@ -162,7 +162,7 @@ public class WorkerHandler extends JavaPlugin implements Listener, Runnable {
 	public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {
 		Player player = event.getPlayer();
 
-		if (!player.hasPermission("jobassign")) {
+		if (!player.hasPermission("usefulvillagers.jobassign")) {
 			player.sendMessage(NO_PERMISSION_MESSAGE);
 			return;
 		}

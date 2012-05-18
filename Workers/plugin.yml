@@ -1,12 +1,12 @@
 name: UsefulVillagers
-version: 0.2.3
+version: 0.2.4
 author: Some Random Gamedev
 website: http://dev.bukkit.org/server-mods/usefulvillagers/
 
 main: org.randomgd.bukkit.workers.WorkerHandler
 
 permissions:
-  jobassign:
-    description: Give access to villager interaction.
-    default: op
+    usefulvillagers.jobassign:
+       description: Give access to villager interaction.
+       default: op
 

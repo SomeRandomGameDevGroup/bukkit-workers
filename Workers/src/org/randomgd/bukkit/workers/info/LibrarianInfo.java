@@ -2,7 +2,6 @@ package org.randomgd.bukkit.workers.info;
 
 import java.io.Serializable;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -96,6 +95,13 @@ public class LibrarianInfo implements WorkerInfo {
 		}
 
 		/**
+		 * @return Remaining pages.
+		 */
+		public int getRemaining() {
+			return remaining;
+		}
+
+		/**
 		 * Provides the studied item type.
 		 * 
 		 * @return Material type.
@@ -125,8 +131,6 @@ public class LibrarianInfo implements WorkerInfo {
 	private transient int verticalBelow;
 
 	private transient int verticalAbove;
-
-	private transient int librarianRange;
 
 	/**
 	 * Constructor.
@@ -186,10 +190,24 @@ public class LibrarianInfo implements WorkerInfo {
 					buffer.append(ChatColor.GRAY);
 					buffer.append("Be patient, I'm already studying this ");
 					buffer.append(study.getType());
-					buffer.append(" for you.");
+					buffer.append(" for you. I've still ");
+					buffer.append(study.getRemaining()
+							+ " pages to browse in the library.");
 					player.sendMessage(buffer.toString());
-					result = false;
+				} else {
+					int reward = study.getReward();
+					StringBuffer buffer = new StringBuffer();
+					buffer.append(ChatColor.GRAY);
+					buffer.append("I've finished studying the ");
+					buffer.append(study.getType());
+					buffer.append(" you've given to me. Here is what I can learn to you : ");
+					buffer.append(Integer.toString(reward));
+					buffer.append(" XP.");
+					player.sendMessage(buffer.toString());
+					player.giveExp(reward);
+					studies.remove(pid);
 				}
+				result = false;
 			} else {
 				result = initiateStudy(material, player);
 			}
@@ -309,33 +327,6 @@ public class LibrarianInfo implements WorkerInfo {
 				}
 			}
 		}
-
-		// Experience rewarding.
-		List<Entity> entities = entity.getNearbyEntities(librarianRange,
-				librarianRange, librarianRange);
-		synchronized (entities) {
-			for (Entity i : entities) {
-				if (i instanceof Player) {
-					UUID id = i.getUniqueId();
-					Study study = studies.get(id);
-					if ((study != null) && study.isFinished()) {
-						int reward = study.getReward();
-						Player player = (Player) i;
-						StringBuffer buffer = new StringBuffer();
-						buffer.append(ChatColor.GRAY);
-						buffer.append("I've finished studying the ");
-						buffer.append(study.getType());
-						buffer.append(" you've given to me. Here is what I can learn to you : ");
-						buffer.append(Integer.toString(reward));
-						buffer.append(" XP.");
-						player.sendMessage(buffer.toString());
-						player.giveExp(reward);
-						studies.remove(id);
-					}
-				}
-			}
-		}
-
 	}
 
 	private void getCaneFromChest(Chest chest) {
@@ -361,7 +352,5 @@ public class LibrarianInfo implements WorkerInfo {
 		horizontalScan = cnf.getHorizontalRange();
 		verticalAbove = cnf.getVerticalAbove();
 		verticalBelow = cnf.getVerticalBelow();
-		// Librarian specific.
-		librarianRange = cnf.getLibrarianRange();
 	}
 }

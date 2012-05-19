@@ -36,7 +36,7 @@ import org.randomgd.bukkit.workers.util.WorkerCreator;
 /**
  * Just a bunch of test.
  */
-public class WorkerHandler extends JavaPlugin implements Listener, Runnable {
+public class WorkerHandler extends JavaPlugin implements Listener {
 
 	/**
 	 * Message displayed if the player doesn't have the permission to interact
@@ -73,6 +73,7 @@ public class WorkerHandler extends JavaPlugin implements Listener, Runnable {
 				ChatColor.DARK_GRAY + "This villager is now a librarian."));
 	}
 
+	private Configuration configurationHandler;
 	/**
 	 * Workers informations.
 	 */
@@ -92,7 +93,7 @@ public class WorkerHandler extends JavaPlugin implements Listener, Runnable {
 
 		// Get configuration.
 		int period = configuration.getInt("period");
-		Configuration configurationHandler = new Configuration(configuration);
+		configurationHandler = new Configuration(configuration);
 
 		// Get worker information from disk.
 		getWorkerInfoFromDisk();
@@ -104,8 +105,19 @@ public class WorkerHandler extends JavaPlugin implements Listener, Runnable {
 
 		// Launch the BEAST !
 		getServer().getPluginManager().registerEvents(this, this);
-		getServer().getScheduler().scheduleAsyncRepeatingTask(this, this, 10,
-				period);
+		getServer().getScheduler().scheduleSyncRepeatingTask(this,
+				new Runnable() {
+					@Override
+					public void run() {
+						// Villagers are wandering ... oooh the great life.
+						// They will fix blocks nearby, according to their
+						// profession.
+						for (World world : getServer().getWorlds()) {
+							browseEntities(Villager.class, world);
+							browseEntities(IronGolem.class, world);
+						}
+					}
+				}, 10, period);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -204,6 +216,7 @@ public class WorkerHandler extends JavaPlugin implements Listener, Runnable {
 						}
 						villager.setProfession(profession);
 						info = creator.create();
+						info.setConfiguration(configurationHandler);
 						workerStack.put(id, info);
 						player.sendMessage(creator.getMessage());
 					}
@@ -242,25 +255,25 @@ public class WorkerHandler extends JavaPlugin implements Listener, Runnable {
 		return result;
 	}
 
-	@Override
-	public void run() {
-		// Villagers are wandering ... oooh the great life.
-		// They will fix blocks nearby, according to their profession.
-		for (World world : getServer().getWorlds()) {
-			browseEntities(Villager.class, world);
-			browseEntities(IronGolem.class, world);
-		}
-
-	}
-
-	private <T extends Entity> void browseEntities(Class<T> api, World world) {
-		Collection<T> entities = world.getEntitiesByClass(api); // ## Really ?
-																// Like
-																// this ?
-		Collection<T> browseable = new LinkedList<T>(); // Avoid concurrent
-														// modification.
+	protected <T extends Entity> void browseEntities(Class<T> api,
+			final World world) {
+		Collection<T> entities = world.getEntitiesByClass(api);
+		final Collection<T> browseable = new LinkedList<T>(); // Avoid
+																// concurrent
+		// modification.
 		browseable.addAll(entities);
 
+		this.getServer().getScheduler()
+				.scheduleAsyncDelayedTask(this, new Runnable() {
+					@Override
+					public void run() {
+						browseEntities(world, browseable);
+					}
+				});
+	}
+
+	protected <T extends Entity> void browseEntities(World world,
+			final Collection<T> browseable) {
 		// ## No overcost compared to using the workerInfo keys ?
 		for (T i : browseable) {
 			// Look at the surrounding.

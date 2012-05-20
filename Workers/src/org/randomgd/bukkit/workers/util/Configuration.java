@@ -15,7 +15,11 @@ public final class Configuration {
 
 	private int verticalAbove;
 
-	private int librarianRange;
+	private int listUpdatePeriod;
+
+	private int entityUpdatePeriod;
+
+	private int timePerUpdate;
 
 	/**
 	 * Constructor.
@@ -27,7 +31,9 @@ public final class Configuration {
 		horizontalRange = configuration.getInt("horizontalrange");
 		verticalBelow = configuration.getInt("verticalbelow");
 		verticalAbove = configuration.getInt("verticalabove");
-		librarianRange = configuration.getInt("librarianrange");
+		listUpdatePeriod = configuration.getInt("listupdateperiod");
+		entityUpdatePeriod = configuration.getInt("entityupdateperiod");
+		timePerUpdate = configuration.getInt("timeperupdate");
 	}
 
 	public final int getHorizontalRange() {
@@ -42,8 +48,16 @@ public final class Configuration {
 		return verticalAbove;
 	}
 
-	public final int getLibrarianRange() {
-		return librarianRange;
+	public final int getListUpdatePeriod() {
+		return listUpdatePeriod;
+	}
+
+	public final int getEntityUpdatePeriod() {
+		return entityUpdatePeriod;
+	}
+
+	public final int getTimePerUpdate() {
+		return timePerUpdate;
 	}
 
 }

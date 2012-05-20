@@ -1,7 +1,7 @@
-period: 150
-horizontalrange: 2
+listupdateperiod: 50
+entityupdateperiod: 5
+timeperupdate: 20
+horizontalrange: 1
 verticalbelow: 2
 verticalabove: 2
-librarianrange: 5
-
 

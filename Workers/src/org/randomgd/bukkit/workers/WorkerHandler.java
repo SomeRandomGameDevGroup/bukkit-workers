@@ -7,12 +7,13 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import org.bukkit.ChatColor;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -26,6 +27,9 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitScheduler;
+import org.randomgd.bukkit.workers.common.Ring;
+import org.randomgd.bukkit.workers.common.Worker;
 import org.randomgd.bukkit.workers.info.FarmerInfo;
 import org.randomgd.bukkit.workers.info.GolemInfo;
 import org.randomgd.bukkit.workers.info.LibrarianInfo;
@@ -73,11 +77,30 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 				ChatColor.DARK_GRAY + "This villager is now a librarian."));
 	}
 
+	/**
+	 * Handle configuration.
+	 */
 	private Configuration configurationHandler;
+
 	/**
 	 * Workers informations.
 	 */
 	private Map<UUID, WorkerInfo> workerStack;
+
+	/**
+	 * Worker ring.
+	 */
+	private Ring<Worker> ring = new Ring<Worker>();
+
+	/**
+	 * Workers to add.
+	 */
+	private Collection<Worker> pool = new LinkedList<Worker>();
+
+	/**
+	 * Managed entities.
+	 */
+	private Set<Entity> entities = new HashSet<Entity>();
 
 	/**
 	 * Constructor.
@@ -90,10 +113,12 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 	@Override
 	public void onEnable() {
 		FileConfiguration configuration = getConfig();
+		BukkitScheduler scheduler = getServer().getScheduler();
 
 		// Get configuration.
-		int period = configuration.getInt("period");
 		configurationHandler = new Configuration(configuration);
+		int entityUpdatePeriod = configurationHandler.getEntityUpdatePeriod();
+		int listUpdatePeriod = configurationHandler.getListUpdatePeriod();
 
 		// Get worker information from disk.
 		getWorkerInfoFromDisk();
@@ -105,19 +130,46 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 
 		// Launch the BEAST !
 		getServer().getPluginManager().registerEvents(this, this);
-		getServer().getScheduler().scheduleSyncRepeatingTask(this,
-				new Runnable() {
-					@Override
-					public void run() {
-						// Villagers are wandering ... oooh the great life.
-						// They will fix blocks nearby, according to their
-						// profession.
-						for (World world : getServer().getWorlds()) {
-							browseEntities(Villager.class, world);
-							browseEntities(IronGolem.class, world);
+
+		// List updater.
+		scheduler.scheduleSyncRepeatingTask(this, new Runnable() {
+			@Override
+			public void run() {
+				synchronized (entities) {
+					synchronized (pool) {
+						Set<Entity> buffer = new HashSet<Entity>();
+						Set<Entity> added = new HashSet<Entity>();
+						for (World i : getServer().getWorlds()) {
+							buffer.addAll(i.getEntitiesByClass(Villager.class));
+							buffer.addAll(i.getEntitiesByClass(IronGolem.class));
 						}
+						added.addAll(buffer);
+						added.removeAll(entities);
+						// In buffer remains all the entities that have been
+						// added since last time.
+						for (Entity i : added) {
+							pool.add(new Worker(i, workerStack));
+						}
+						entities.clear();
+						entities.addAll(buffer);
+						buffer.clear();
+						added.clear();
 					}
-				}, 10, period);
+				}
+			}
+		}, 150, listUpdatePeriod);
+
+		// Entity updater.
+		scheduler.scheduleSyncRepeatingTask(this, new Runnable() {
+			@Override
+			public void run() {
+				synchronized (pool) {
+					ring.tick(configurationHandler.getTimePerUpdate(), pool);
+					pool.clear();
+				}
+			}
+		}, 150, entityUpdatePeriod);
+
 	}
 
 	@SuppressWarnings("unchecked")
@@ -255,33 +307,4 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 		return result;
 	}
 
-	protected <T extends Entity> void browseEntities(Class<T> api,
-			final World world) {
-		Collection<T> entities = world.getEntitiesByClass(api);
-		final Collection<T> browseable = new LinkedList<T>(); // Avoid
-																// concurrent
-		// modification.
-		browseable.addAll(entities);
-		browseEntities(world, browseable);
-	}
-
-	protected <T extends Entity> void browseEntities(World world,
-			final Collection<T> browseable) {
-		// ## No overcost compared to using the workerInfo keys ?
-		for (T i : browseable) {
-			// Look at the surrounding.
-			UUID id = i.getUniqueId();
-			WorkerInfo info = workerStack.get(id);
-			if (info != null) {
-				Location currentLocation = i.getLocation();
-				int x = currentLocation.getBlockX();
-				int y = currentLocation.getBlockY();
-				int z = currentLocation.getBlockZ();
-				// It's always nice to know where we are.
-				info.perform(i, x, y, z, world);
-			}
-		}
-
-		browseable.clear();
-	}
 }

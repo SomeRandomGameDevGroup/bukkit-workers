@@ -53,7 +53,7 @@ public class Ring<T extends Executable> {
 	 *            Maximum time of this tick in milliseconds.
 	 */
 	public void tick(long time, Collection<T> toAdd) {
-		long start = System.currentTimeMillis();
+		long start = System.nanoTime();
 		long elapsed = 0;
 		long now;
 
@@ -85,7 +85,7 @@ public class Ring<T extends Executable> {
 				}
 			}
 
-			now = System.currentTimeMillis();
+			now = System.nanoTime();
 			elapsed += now - start;
 			start = now;
 		}
@@ -97,7 +97,6 @@ public class Ring<T extends Executable> {
 				UUID id = i.getUniqueId();
 				Token<T> token = tokens.get(id);
 				if (token == null) {
-					System.out.println("Add " + i);
 					token = new Token<T>(i);
 					if (current == null) {
 						current = token;
@@ -112,7 +111,6 @@ public class Ring<T extends Executable> {
 					}
 					tokens.put(id, token);
 				} else {
-					System.out.println("Replace " + i);
 					token.core = i;
 				}
 			}

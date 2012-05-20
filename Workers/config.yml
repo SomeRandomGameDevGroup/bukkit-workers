@@ -1,6 +1,6 @@
-listupdateperiod: 50
+listupdateperiod: 300
 entityupdateperiod: 5
-timeperupdate: 20
+timeperupdate: 200000
 horizontalrange: 1
 verticalbelow: 2
 verticalabove: 2

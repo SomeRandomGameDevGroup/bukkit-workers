@@ -1,7 +1,11 @@
-listupdateperiod: 300
-entityupdateperiod: 5
-timeperupdate: 200000
-horizontalrange: 1
-verticalbelow: 2
-verticalabove: 2
-
+timing:
+  listupdate: 300
+  entity:
+    period: 5
+    payload: 200000
+scanning:
+  horizontalrange: 1
+  verticalbelow: 2
+  verticalabove: 2
+librarian:
+  bookproduction: 1000

@@ -21,6 +21,8 @@ public final class Configuration {
 
 	private int timePerUpdate;
 
+	private int librarianBookTime;
+
 	/**
 	 * Constructor.
 	 * 
@@ -28,12 +30,13 @@ public final class Configuration {
 	 *            Configuration file.
 	 */
 	public Configuration(FileConfiguration configuration) {
-		horizontalRange = configuration.getInt("horizontalrange");
-		verticalBelow = configuration.getInt("verticalbelow");
-		verticalAbove = configuration.getInt("verticalabove");
-		listUpdatePeriod = configuration.getInt("listupdateperiod");
-		entityUpdatePeriod = configuration.getInt("entityupdateperiod");
-		timePerUpdate = configuration.getInt("timeperupdate");
+		horizontalRange = configuration.getInt("scanning.horizontalrange");
+		verticalBelow = configuration.getInt("scanning.verticalbelow");
+		verticalAbove = configuration.getInt("scanning.verticalabove");
+		listUpdatePeriod = configuration.getInt("timing.listupdate");
+		entityUpdatePeriod = configuration.getInt("timing.entity.period");
+		timePerUpdate = configuration.getInt("timing.entity.payload");
+		librarianBookTime = configuration.getInt("librarian.bookproduction");
 	}
 
 	public final int getHorizontalRange() {
@@ -58,6 +61,10 @@ public final class Configuration {
 
 	public final int getTimePerUpdate() {
 		return timePerUpdate;
+	}
+
+	public final int getLibrarianBookTime() {
+		return librarianBookTime;
 	}
 
 }

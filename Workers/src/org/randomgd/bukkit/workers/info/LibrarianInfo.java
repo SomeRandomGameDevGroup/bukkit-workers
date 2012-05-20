@@ -37,6 +37,9 @@ public class LibrarianInfo implements WorkerInfo {
 		 */
 		private static final long serialVersionUID = -4227577608048656898L;
 
+		private static final int WORD_PER_STUDY_BITS = 200; // Arbitrary high
+															// value.
+
 		/**
 		 * Study case.
 		 */
@@ -51,6 +54,8 @@ public class LibrarianInfo implements WorkerInfo {
 		 * Remaining study bits.
 		 */
 		private int remaining;
+
+		private int words;
 
 		/**
 		 * Constructor.
@@ -89,8 +94,13 @@ public class LibrarianInfo implements WorkerInfo {
 		 */
 		public void study() {
 			if (remaining > 0) {
-				--remaining;
-				reward += (int) (Math.random() * 3);
+				if (words < 0) {
+					--remaining;
+					reward += (int) (Math.random() * 3);
+					words = WORD_PER_STUDY_BITS;
+				} else {
+					--words;
+				}
 			}
 		}
 
@@ -132,6 +142,13 @@ public class LibrarianInfo implements WorkerInfo {
 
 	private transient int verticalAbove;
 
+	private transient int bookBuildTime;
+
+	/**
+	 * The last time the librarian built a book.
+	 */
+	private transient long lastBookTime;
+
 	/**
 	 * Constructor.
 	 */
@@ -149,7 +166,7 @@ public class LibrarianInfo implements WorkerInfo {
 		StringBuffer buffer = new StringBuffer();
 		buffer.append(ChatColor.GRAY);
 		buffer.append("I'm a librarian.");
-		if (cane > 0) {
+		if (cane >= 3) {
 			buffer.append(" I have some book to make");
 			if (book > 0) {
 				buffer.append(" and to desposit.");
@@ -301,9 +318,14 @@ public class LibrarianInfo implements WorkerInfo {
 					Material material = block.getType();
 					switch (material) {
 					case WORKBENCH: {
-						int generated = cane / 3;
-						book += generated;
-						cane %= 3;
+						if (cane >= 3) {
+							long now = System.currentTimeMillis();
+							if (now - lastBookTime > bookBuildTime) {
+								cane -= 3;
+								++book;
+								lastBookTime = now;
+							}
+						}
 						break;
 					}
 					case CHEST: {
@@ -352,5 +374,7 @@ public class LibrarianInfo implements WorkerInfo {
 		horizontalScan = cnf.getHorizontalRange();
 		verticalAbove = cnf.getVerticalAbove();
 		verticalBelow = cnf.getVerticalBelow();
+		bookBuildTime = cnf.getLibrarianBookTime();
+		lastBookTime = System.currentTimeMillis();
 	}
 }

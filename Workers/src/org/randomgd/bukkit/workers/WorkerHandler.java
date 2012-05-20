@@ -157,7 +157,7 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 					}
 				}
 			}
-		}, 150, listUpdatePeriod);
+		}, 10, listUpdatePeriod);
 
 		// Entity updater.
 		scheduler.scheduleSyncRepeatingTask(this, new Runnable() {

@@ -24,6 +24,12 @@ public class FarmerInfo implements WorkerInfo {
 	private static final long serialVersionUID = -9109147287021672895L;
 
 	/**
+	 * Message displayed to the player if the villager can't accept more items.
+	 */
+	private static final String FULL_STACK = ChatColor.GRAY
+			+ "I'm full of this. Please keep it.";
+
+	/**
 	 * Max amount of transported items.
 	 */
 	private static int MAX_AMOUNT = 64;
@@ -199,6 +205,7 @@ public class FarmerInfo implements WorkerInfo {
 			if (wheatSeed < MAX_AMOUNT) {
 				++wheatSeed;
 			} else {
+				player.sendMessage(FULL_STACK);
 				result = false;
 			}
 			break;
@@ -206,6 +213,7 @@ public class FarmerInfo implements WorkerInfo {
 			if (pumpkinSeed < MAX_AMOUNT) {
 				++pumpkinSeed;
 			} else {
+				player.sendMessage(FULL_STACK);
 				result = false;
 			}
 			break;
@@ -213,6 +221,7 @@ public class FarmerInfo implements WorkerInfo {
 			if (melonSeed < MAX_AMOUNT) {
 				++melonSeed;
 			} else {
+				player.sendMessage(FULL_STACK);
 				result = false;
 			}
 			break;

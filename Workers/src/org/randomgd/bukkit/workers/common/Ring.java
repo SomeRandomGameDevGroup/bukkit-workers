@@ -1,6 +1,9 @@
 package org.randomgd.bukkit.workers.common;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 public class Ring<T extends Executable> {
 
@@ -30,6 +33,11 @@ public class Ring<T extends Executable> {
 	}
 
 	/**
+	 * Token base.
+	 */
+	private Map<UUID, Token<T>> tokens = new HashMap<UUID, Token<T>>();
+
+	/**
 	 * Current token.
 	 */
 	private Token<T> current;
@@ -55,7 +63,7 @@ public class Ring<T extends Executable> {
 		while ((elapsed < time) && (current != null)) {
 			boolean toRemove = !current.perform();
 			if (toRemove) {
-				System.out.println("Remove " + current.core);
+				tokens.remove(current);
 				if (last == current) {
 					last = current.next;
 				}
@@ -85,20 +93,27 @@ public class Ring<T extends Executable> {
 
 	private void add(Collection<T> toAdd) {
 		if ((toAdd != null) && (!toAdd.isEmpty())) {
-			System.out.println("Must add " + toAdd.size() + " tokens.");
 			for (T i : toAdd) {
-				System.out.println(i);
-				Token<T> newToken = new Token<T>(i);
-				if (current == null) {
-					current = newToken;
-					current.next = current;
-					current.previous = current;
+				UUID id = i.getUniqueId();
+				Token<T> token = tokens.get(id);
+				if (token == null) {
+					System.out.println("Add " + i);
+					token = new Token<T>(i);
+					if (current == null) {
+						current = token;
+						current.next = current;
+						current.previous = current;
+					} else {
+						Token<T> next = current.next;
+						token.next = next;
+						token.previous = current;
+						current.next = token;
+						next.previous = token;
+					}
+					tokens.put(id, token);
 				} else {
-					Token<T> next = current.next;
-					newToken.next = next;
-					newToken.previous = current;
-					current.next = newToken;
-					next.previous = newToken;
+					System.out.println("Replace " + i);
+					token.core = i;
 				}
 			}
 		}

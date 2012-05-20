@@ -66,4 +66,9 @@ public class Worker implements Executable {
 				id.toString(), entity.getType(), x, y, z);
 		return information;
 	}
+
+	@Override
+	public UUID getUniqueId() {
+		return id;
+	}
 }

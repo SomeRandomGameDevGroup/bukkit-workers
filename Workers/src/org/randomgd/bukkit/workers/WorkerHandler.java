@@ -262,14 +262,7 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 																// concurrent
 		// modification.
 		browseable.addAll(entities);
-
-		this.getServer().getScheduler()
-				.scheduleAsyncDelayedTask(this, new Runnable() {
-					@Override
-					public void run() {
-						browseEntities(world, browseable);
-					}
-				});
+		browseEntities(world, browseable);
 	}
 
 	protected <T extends Entity> void browseEntities(World world,

@@ -1,5 +1,7 @@
 package org.randomgd.bukkit.workers.util;
 
+import java.util.Collection;
+
 import org.bukkit.Material;
 import org.bukkit.block.Chest;
 import org.bukkit.inventory.Inventory;
@@ -82,7 +84,7 @@ public final class ChestHandler {
 				if (s.getType().equals(material)
 						&& (s.getData().getData() == data)) {
 					int stackSize = s.getAmount();
-					int room = 64 - stackSize;
+					int room = s.getMaxStackSize() - stackSize;
 					if (room > curAmount) {
 						room = curAmount;
 					}
@@ -99,4 +101,63 @@ public final class ChestHandler {
 		return result;
 	}
 
+	/**
+	 * Get item from chest.
+	 * 
+	 * @param material
+	 *            Type of item to retrieve.
+	 * @param amount
+	 *            Maximum amount of material to retrieve.
+	 * @param chest
+	 *            Chest.
+	 * @return Amount of retrieved item.
+	 */
+	public static int get(Material material, int amount, Chest chest) {
+		int result = 0;
+		int toGet = amount;
+		Inventory inventory = chest.getInventory();
+		int size = inventory.getSize();
+		for (int i = 0; i < size; ++i) {
+			ItemStack stack = inventory.getItem(i);
+			if (stack != null) {
+				Material m = stack.getType();
+				int available = stack.getAmount();
+				if ((available > 0) && material.equals(m)) {
+					if (available > toGet) {
+						available = toGet;
+					}
+					result += available;
+					toGet -= available;
+					stack.setAmount(stack.getAmount() - available);
+					inventory.setItem(i, stack);
+				}
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Get items from a set of chests.
+	 * 
+	 * @param material
+	 *            Material to get.
+	 * @param toRetrieve
+	 *            Amount of stuff to retrieve.
+	 * @param chest
+	 *            List of chests.
+	 * @return Amount of retrieved stuff.
+	 */
+	public static int get(Material material, int toRetrieve,
+			Collection<Chest> chest) {
+		int result = 0;
+		for (Chest j : chest) {
+			int retrieved = ChestHandler.get(material, toRetrieve, j);
+			result += retrieved;
+			toRetrieve -= retrieved;
+			if (toRetrieve == 0) {
+				break;
+			}
+		}
+		return result;
+	}
 }

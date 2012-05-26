@@ -30,6 +30,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.randomgd.bukkit.workers.common.Ring;
 import org.randomgd.bukkit.workers.common.Worker;
+import org.randomgd.bukkit.workers.info.BlacksmithInfo;
 import org.randomgd.bukkit.workers.info.FarmerInfo;
 import org.randomgd.bukkit.workers.info.GolemInfo;
 import org.randomgd.bukkit.workers.info.LibrarianInfo;
@@ -41,6 +42,23 @@ import org.randomgd.bukkit.workers.util.WorkerCreator;
  * Just a bunch of test.
  */
 public class WorkerHandler extends JavaPlugin implements Listener {
+
+	/**
+	 * Set of material that can be smelt.
+	 */
+	public static final Set<Material> SMELTABLE = new HashSet<Material>();
+	{
+		SMELTABLE.add(Material.CACTUS);
+		SMELTABLE.add(Material.CLAY_BALL);
+		SMELTABLE.add(Material.COBBLESTONE);
+		SMELTABLE.add(Material.GOLD_ORE);
+		SMELTABLE.add(Material.IRON_ORE);
+		// TODO SMELTABLE.add(Material.LOG);
+		SMELTABLE.add(Material.RAW_BEEF);
+		SMELTABLE.add(Material.RAW_CHICKEN);
+		SMELTABLE.add(Material.RAW_FISH);
+		SMELTABLE.add(Material.SAND);
+	}
 
 	/**
 	 * Message displayed if the player doesn't have the permission to interact
@@ -75,6 +93,11 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 		PROFESSION_TRIGGER.put(Material.BOOK, new WorkerCreator(
 				Villager.Profession.LIBRARIAN, LibrarianInfo.class,
 				ChatColor.DARK_GRAY + "This villager is now a librarian."));
+
+		PROFESSION_TRIGGER.put(Material.IRON_INGOT, new WorkerCreator(
+				Villager.Profession.BLACKSMITH, BlacksmithInfo.class,
+				ChatColor.DARK_GRAY + "This villager is now a blacksmith."));
+
 	}
 
 	/**

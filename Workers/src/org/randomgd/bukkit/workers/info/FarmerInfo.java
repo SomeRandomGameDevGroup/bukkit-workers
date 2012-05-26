@@ -277,7 +277,7 @@ public class FarmerInfo implements WorkerInfo {
 		// So ! Check the blocks !
 		// A farmer can operate on blocks around him, at its level up to two
 		// level up.
-		if ((y > 252) || (y < 5)) { // Magic number
+		if ((y > 252) || (y < verticalBelow)) { // Magic number
 			// A farmer which is too high to operate.
 			return;
 		}

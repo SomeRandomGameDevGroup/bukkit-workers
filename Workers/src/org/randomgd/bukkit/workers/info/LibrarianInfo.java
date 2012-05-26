@@ -304,7 +304,7 @@ public class LibrarianInfo implements WorkerInfo {
 	 */
 	@Override
 	public void perform(Entity entity, int x, int y, int z, World world) {
-		if ((y > 252) || (y < 5)) {
+		if ((y > 252) || (y < verticalBelow)) {
 			return;
 		}
 		// Scanning.

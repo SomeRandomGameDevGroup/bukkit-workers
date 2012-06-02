@@ -31,6 +31,7 @@ import org.bukkit.scheduler.BukkitScheduler;
 import org.randomgd.bukkit.workers.common.Ring;
 import org.randomgd.bukkit.workers.common.Worker;
 import org.randomgd.bukkit.workers.info.BlacksmithInfo;
+import org.randomgd.bukkit.workers.info.ButcherInfo;
 import org.randomgd.bukkit.workers.info.FarmerInfo;
 import org.randomgd.bukkit.workers.info.GolemInfo;
 import org.randomgd.bukkit.workers.info.LibrarianInfo;
@@ -97,6 +98,10 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 		PROFESSION_TRIGGER.put(Material.IRON_INGOT, new WorkerCreator(
 				Villager.Profession.BLACKSMITH, BlacksmithInfo.class,
 				ChatColor.DARK_GRAY + "This villager is now a blacksmith."));
+
+		PROFESSION_TRIGGER.put(Material.LEATHER, new WorkerCreator(
+				Villager.Profession.BUTCHER, ButcherInfo.class,
+				ChatColor.DARK_GRAY + "This villager is now a butcher."));
 
 	}
 

@@ -23,6 +23,10 @@ public final class Configuration {
 
 	private int librarianBookTime;
 
+	private int butcherRadius;
+
+	private int butcherShearPeriod;
+
 	/**
 	 * Constructor.
 	 * 
@@ -37,6 +41,8 @@ public final class Configuration {
 		entityUpdatePeriod = configuration.getInt("timing.entity.period");
 		timePerUpdate = configuration.getInt("timing.entity.payload");
 		librarianBookTime = configuration.getInt("librarian.bookproduction");
+		butcherRadius = configuration.getInt("butcher.radius");
+		butcherShearPeriod = configuration.getInt("butcher.shear");
 	}
 
 	public final int getHorizontalRange() {
@@ -65,6 +71,14 @@ public final class Configuration {
 
 	public final int getLibrarianBookTime() {
 		return librarianBookTime;
+	}
+
+	public final int getButcherRadius() {
+		return butcherRadius;
+	}
+
+	public final int getButcherShearPeriod() {
+		return butcherShearPeriod;
 	}
 
 }

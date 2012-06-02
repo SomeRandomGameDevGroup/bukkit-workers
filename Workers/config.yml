@@ -9,3 +9,6 @@ scanning:
   verticalabove: 2
 librarian:
   bookproduction: 1000
+butcher:
+  radius: 2
+  shear: 3000

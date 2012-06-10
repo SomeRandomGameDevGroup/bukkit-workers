@@ -40,7 +40,7 @@ import org.randomgd.bukkit.workers.util.Configuration;
 import org.randomgd.bukkit.workers.util.WorkerCreator;
 
 /**
- * Just a bunch of test.
+ * Plugin entry point.
  */
 public class WorkerHandler extends JavaPlugin implements Listener {
 
@@ -62,18 +62,59 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 	}
 
 	/**
+	 * Set of material a villager is authorized to mine.
+	 */
+	public static final Set<Material> MINABLE = new HashSet<Material>();
+	{
+		MINABLE.add(Material.STONE);
+		MINABLE.add(Material.GRASS);
+		MINABLE.add(Material.DIRT);
+		MINABLE.add(Material.COBBLESTONE);
+		MINABLE.add(Material.SAND);
+		MINABLE.add(Material.GRAVEL);
+		MINABLE.add(Material.GOLD_ORE);
+		MINABLE.add(Material.IRON_ORE);
+		MINABLE.add(Material.COAL_ORE);
+		MINABLE.add(Material.LAPIS_ORE);
+		MINABLE.add(Material.SANDSTONE);
+		MINABLE.add(Material.SOIL);
+		MINABLE.add(Material.REDSTONE_ORE);
+		MINABLE.add(Material.GLOWING_REDSTONE_ORE);
+		MINABLE.add(Material.NETHERRACK);
+		MINABLE.add(Material.SOUL_SAND);
+		MINABLE.add(Material.GLOWSTONE);
+	}
+
+	/**
+	 * Set of material requiring iron pickaxe.
+	 */
+	public static final Set<Material> HARDSTUFF = new HashSet<Material>();
+	{
+		HARDSTUFF.add(Material.GOLD_ORE);
+		HARDSTUFF.add(Material.LAPIS_ORE);
+		HARDSTUFF.add(Material.REDSTONE_ORE);
+	}
+
+	/**
+	 * Message displayed if the player doesn't have the permission to interact
+	 * with the villagers for a task assignment.
+	 */
+	public static final String NO_TASK_PERMISSION_MESSAGE = ChatColor.RED
+			+ "You can't assign this task to a villager.";
+
+	/**
 	 * Message displayed if the player doesn't have the permission to interact
 	 * with the villagers for job assignment.
 	 */
 	private static final String NO_JOB_PERMISSION_MESSAGE = ChatColor.RED
-			+ "You can't assign jobs to villagers";
+			+ "You can't assign jobs to villagers.";
 
 	/**
 	 * Message displayed if the player doesn't have the permission to give
 	 * something to the villagers.
 	 */
 	private static final String NO_GIVE_PERMISSION_MESSAGE = ChatColor.RED
-			+ "You're not allow to give items to villagers";
+			+ "You're not allow to give items to villagers.";
 
 	/**
 	 * Message displayed if trying to interact with a villager that is not
@@ -89,19 +130,23 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 	{
 		PROFESSION_TRIGGER.put(Material.WHEAT, new WorkerCreator(
 				Villager.Profession.FARMER, FarmerInfo.class,
-				ChatColor.DARK_GRAY + "This villager is now a farmer."));
+				ChatColor.DARK_GRAY + "This villager is now a farmer.",
+				"usefulvillagers.jobassign.farmer"));
 
 		PROFESSION_TRIGGER.put(Material.BOOK, new WorkerCreator(
 				Villager.Profession.LIBRARIAN, LibrarianInfo.class,
-				ChatColor.DARK_GRAY + "This villager is now a librarian."));
+				ChatColor.DARK_GRAY + "This villager is now a librarian.",
+				"usefulvillagers.jobassign.librarian"));
 
 		PROFESSION_TRIGGER.put(Material.IRON_INGOT, new WorkerCreator(
 				Villager.Profession.BLACKSMITH, BlacksmithInfo.class,
-				ChatColor.DARK_GRAY + "This villager is now a blacksmith."));
+				ChatColor.DARK_GRAY + "This villager is now a blacksmith.",
+				"usefulvillagers.jobassign.blacksmith"));
 
 		PROFESSION_TRIGGER.put(Material.LEATHER, new WorkerCreator(
 				Villager.Profession.BUTCHER, ButcherInfo.class,
-				ChatColor.DARK_GRAY + "This villager is now a butcher."));
+				ChatColor.DARK_GRAY + "This villager is now a butcher.",
+				"usefulvillagers.jobassign.butcher"));
 
 	}
 
@@ -290,7 +335,7 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 					if ((profession != null)
 							&& (!(profession.equals(villager.getProfession()) && (info != null)))) {
 						// It's ok, we can convert it !
-						if (!player.hasPermission("usefulvillagers.jobassign")) {
+						if (!player.hasPermission(creator.getPermission())) {
 							player.sendMessage(NO_JOB_PERMISSION_MESSAGE);
 							return;
 						}

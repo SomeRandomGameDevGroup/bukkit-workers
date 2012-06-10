@@ -12,3 +12,9 @@ librarian:
 butcher:
   radius: 2
   shear: 3000
+blacksmith:
+  horizontalrange: 2
+  verticalbelow: 2
+  verticalabove: 2
+  miningcooldown: 2500
+  miningdepth: 32

@@ -56,6 +56,30 @@ public final class ChestHandler {
 	}
 
 	/**
+	 * Make a deposit of the specified amount of material.
+	 * 
+	 * @param material
+	 *            Type of material to deposit.
+	 * @param amount
+	 *            Amount.
+	 * @param chest
+	 *            List of chest.
+	 * @return Remaining item count.
+	 */
+	public static int deposit(Material material, int amount,
+			Collection<Chest> chest) {
+		int result = amount;
+
+		for (Chest i : chest) {
+			result = deposit(material, amount, i);
+			if (result == 0) {
+				break;
+			}
+		}
+		return result;
+	}
+
+	/**
 	 * Make a deposit of a specified amount of material.
 	 * 
 	 * @param material
@@ -155,6 +179,26 @@ public final class ChestHandler {
 			result += retrieved;
 			toRetrieve -= retrieved;
 			if (toRetrieve == 0) {
+				break;
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Look for a free slot in the supplied collection of chests.
+	 * 
+	 * @param chest
+	 *            Collection of chests.
+	 * @return true if there's a least one free slot.
+	 */
+	public static boolean hasFreeSlot(Collection<Chest> chest) {
+		boolean result = false;
+
+		for (Chest i : chest) {
+			Inventory inventory = i.getInventory();
+			if (inventory.firstEmpty() >= 0) {
+				result = true;
 				break;
 			}
 		}

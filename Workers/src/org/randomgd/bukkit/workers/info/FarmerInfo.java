@@ -10,6 +10,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.randomgd.bukkit.workers.ToolUsage;
+import org.randomgd.bukkit.workers.WorkerHandler;
 import org.randomgd.bukkit.workers.util.ChestHandler;
 import org.randomgd.bukkit.workers.util.Configuration;
 
@@ -240,15 +241,26 @@ public class FarmerInfo implements WorkerInfo {
 			break;
 		}
 		case WHEAT: {
-			applyOverrideMarker(player, Material.GRAVEL,
-					"Let's grow wheat everywhere !");
-			result = false;
+			if (player.hasPermission("usefulvillagers.jobassign.seeder")) {
+				applyOverrideMarker(player, Material.GRAVEL,
+						"Let's grow wheat everywhere !");
+				result = false;
+			} else {
+				player.sendMessage(WorkerHandler.NO_TASK_PERMISSION_MESSAGE);
+				result = false;
+			}
 			break;
 		}
 		case SAPLING: {
-			applyOverrideMarker(player, Material.WOOD,
-					"Let's cut all birch trees !");
-			result = false;
+			if (player.hasPermission("usefulvillagers.jobassign.lumberjack")) {
+				applyOverrideMarker(player, Material.WOOD,
+						"Let's cut all birch trees !");
+				result = false;
+			} else {
+				player.sendMessage(WorkerHandler.NO_TASK_PERMISSION_MESSAGE);
+				result = false;
+			}
+			break;
 		}
 		default:
 			result = false;

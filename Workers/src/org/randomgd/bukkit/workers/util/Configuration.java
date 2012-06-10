@@ -6,6 +6,53 @@ import org.bukkit.configuration.file.FileConfiguration;
  * Configuration.
  */
 public final class Configuration {
+
+	// TODO do the same for other professions.
+
+	/**
+	 * Specific blacksmith configuration.
+	 */
+	public static class Blacksmith {
+		private int horizontalRange;
+
+		private int verticalBelow;
+
+		private int verticalAbove;
+
+		private int miningCooldown;
+
+		private int miningDepth;
+
+		public Blacksmith(FileConfiguration configuration) {
+			horizontalRange = configuration
+					.getInt("blacksmith.horizontalrange");
+			verticalBelow = configuration.getInt("blacksmith.verticalbelow");
+			verticalAbove = configuration.getInt("blacksmith.verticalabove");
+			miningCooldown = configuration.getInt("blacksmith.miningcooldown");
+			miningDepth = configuration.getInt("blacksmith.miningdepth");
+		}
+
+		public final int getMiningDepth() {
+			return miningDepth;
+		}
+
+		public final int getMiningCooldown() {
+			return miningCooldown;
+		}
+
+		public final int getHorizontalRange() {
+			return horizontalRange;
+		}
+
+		public final int getVerticalBelow() {
+			return verticalBelow;
+		}
+
+		public final int getVerticalAbove() {
+			return verticalAbove;
+		}
+	}
+
 	// ## I hate this ! It generates an execution overhead, but for the sake of
 	// flexibility, let's do it.
 
@@ -27,6 +74,8 @@ public final class Configuration {
 
 	private int butcherShearPeriod;
 
+	private Blacksmith blacksmith;
+
 	/**
 	 * Constructor.
 	 * 
@@ -43,6 +92,11 @@ public final class Configuration {
 		librarianBookTime = configuration.getInt("librarian.bookproduction");
 		butcherRadius = configuration.getInt("butcher.radius");
 		butcherShearPeriod = configuration.getInt("butcher.shear");
+		blacksmith = new Blacksmith(configuration);
+	}
+
+	public final Blacksmith getBlacksmithConfiguration() {
+		return blacksmith;
 	}
 
 	public final int getHorizontalRange() {

@@ -28,10 +28,28 @@ public class WorkerCreator {
 	 */
 	private String welcomeMessage;
 
+	/**
+	 * Permission identifier.
+	 */
+	private String permission;
+
+	/**
+	 * Construction.
+	 * 
+	 * @param prf
+	 *            Profession.
+	 * @param cls
+	 *            Handler class descriptor.
+	 * @param wlc
+	 *            Welcome message.
+	 * @param prm
+	 *            Permission identifier.
+	 */
 	public WorkerCreator(Villager.Profession prf,
-			Class<? extends WorkerInfo> cls, String wlc) {
+			Class<? extends WorkerInfo> cls, String wlc, String prm) {
 		profession = prf;
 		welcomeMessage = wlc;
+		permission = prm;
 		try {
 			constructor = cls.getConstructor();
 		} catch (Exception ex) {
@@ -60,14 +78,21 @@ public class WorkerCreator {
 	/**
 	 * @return The targeted profession.
 	 */
-	public Villager.Profession getProfession() {
+	public final Villager.Profession getProfession() {
 		return profession;
 	}
 
 	/**
 	 * @return The welcome message.
 	 */
-	public String getMessage() {
+	public final String getMessage() {
 		return welcomeMessage;
+	}
+
+	/**
+	 * @return The permission identifier.
+	 */
+	public final String getPermission() {
+		return permission;
 	}
 }

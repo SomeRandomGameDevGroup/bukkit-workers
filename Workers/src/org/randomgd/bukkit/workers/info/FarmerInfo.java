@@ -725,7 +725,9 @@ public class FarmerInfo implements WorkerInfo {
 			}
 		} else {
 			// It's already soil !
-			ready = !Material.CROPS.equals(aboveMaterial);
+			ready = !(Material.CROPS.equals(aboveMaterial)
+					|| Material.MELON_STEM.equals(aboveMaterial) || Material.PUMPKIN_STEM
+					.equals(aboveMaterial));
 		}
 		return ready;
 	}

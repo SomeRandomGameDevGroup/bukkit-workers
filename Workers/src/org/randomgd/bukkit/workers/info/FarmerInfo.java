@@ -5,19 +5,17 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.randomgd.bukkit.workers.ToolUsage;
 import org.randomgd.bukkit.workers.WorkerHandler;
 import org.randomgd.bukkit.workers.util.ChestHandler;
-import org.randomgd.bukkit.workers.util.Configuration;
 
 /**
  * Information about a farmer activity and inventory.
  */
-public class FarmerInfo implements WorkerInfo {
+public class FarmerInfo extends ScannerInfo {
 
 	/**
 	 * Farmer info unique identifier.
@@ -96,11 +94,10 @@ public class FarmerInfo implements WorkerInfo {
 	 */
 	private Material overrideMarker;
 
-	private transient int horizontalScan;
-
-	private transient int verticalBelow;
-
-	private transient int verticalAbove;
+	/**
+	 * Last column marker.
+	 */
+	private transient Material lastMarker;
 
 	/**
 	 * Constructor.
@@ -284,176 +281,6 @@ public class FarmerInfo implements WorkerInfo {
 		}
 	}
 
-	@Override
-	public void perform(Entity entity, int x, int y, int z, World world) {
-		// So ! Check the blocks !
-		// A farmer can operate on blocks around him, at its level up to two
-		// level up.
-		if ((y > 252) || (y < verticalBelow)) { // Magic number
-			// A farmer which is too high to operate.
-			return;
-		}
-
-		// The strategy is simple. We check block from bottom to top.
-		// If a marker is encountered, it will set conditions for further
-		// actions.
-		// ## From an optimization point of view : should it be better to store
-		// the loop bounds in final variable ?
-		for (int xOffset = -horizontalScan; xOffset <= horizontalScan; ++xOffset) {
-			int xA = x + xOffset;
-			for (int zOffset = -horizontalScan; zOffset <= horizontalScan; ++zOffset) {
-				int zA = z + zOffset;
-				Material lastMarker = null;
-				for (int yOffset = -verticalBelow; yOffset <= verticalAbove; ++yOffset) {
-					int yA = y + yOffset;
-					Block block = world.getBlockAt(xA, yA, zA);
-					Material material = block.getType();
-					byte metaData = block.getData();
-
-					// So, What can we sense ?
-					/*
-					 * Markers are the following : - Gravel enable wheat work. -
-					 * Sandstone enable sugar cane work. - Wood enable tree
-					 * work. - Cobblestone enable melon work. - Stone brick
-					 * enable pumpkin work.
-					 */
-
-					switch (material) {
-					// Markers detection.
-					case GRAVEL:
-					case SANDSTONE:
-					case WOOD:
-					case COBBLESTONE:
-					case SMOOTH_BRICK:
-						lastMarker = material;
-						break;
-
-					// Harvest part.
-					case CROPS: {
-						// Whatever happens, we harvest crops.
-						// Markers are only for tool use.
-						if (metaData == (byte) 7) { // Ready to harvest.
-							++wheat;
-							wheatSeed += (int) (Math.random() * 2);
-							if (wheatSeed > MAX_AMOUNT) {
-								wheatSeed = MAX_AMOUNT;
-							}
-							// We assume that crop harvesting will procure at
-							// least one seed.
-							block.setData((byte) 0);
-						}
-						break;
-					}
-					case SUGAR_CANE_BLOCK: {
-						// We first met sugar cane.
-						// All the sugar cane block above will be harvest.
-						int topLocation;
-						for (topLocation = yA; topLocation < 255; ++topLocation) {
-							Block logBlock = world.getBlockAt(xA, topLocation,
-									zA);
-							if (!logBlock.getType().equals(
-									Material.SUGAR_CANE_BLOCK)) {
-								--topLocation;
-								break;
-							}
-						}
-						// And now, chop the wood !
-						for (int yB = topLocation; yB > yA; --yB) {
-							Block toCut = world.getBlockAt(xA, yB, zA);
-							toCut.setType(Material.AIR);
-							++sugarCane;
-						}
-						break;
-					}
-					case MELON_BLOCK: {
-						// The melon harvesting is a bit tweaked.
-						// We lower the slice amount, but automatically add
-						// a chance to get a melon seed.
-						block.setType(Material.AIR);
-						melon += 1 + (int) (Math.random() * 6);
-						melonSeed += (int) (Math.random() * 1.5);
-						if (melonSeed > MAX_AMOUNT) {
-							melonSeed = MAX_AMOUNT;
-						}
-						break;
-					}
-					case PUMPKIN: {
-						block.setType(Material.AIR);
-						++pumpkin;
-						// For now, pumpkin seeds can only be provided by
-						// players.
-						break;
-					}
-
-					// Work part.
-					// This is where we require tools.
-					case DIRT:
-					case GRASS:
-					case SOIL:
-						if (doEarthWork(world, xA, zA, yA, block, material,
-								lastMarker)) {
-							lastMarker = null;
-						}
-						break;
-					case SAND: {
-						if (Material.SANDSTONE.equals(lastMarker)) {
-							Block above = world.getBlockAt(xA, yA + 1, zA);
-							Material aboveMaterial = above.getType();
-
-							if (plantSugarCane(block, material, above,
-									aboveMaterial)) {
-								lastMarker = null;
-							}
-						}
-						break;
-					}
-					case LOG: {
-						if ((Material.WOOD.equals(lastMarker) || Material.WOOD
-								.equals(overrideMarker))
-								&& (metaData == 2)
-								&& (axe > 0)) {
-							// Time to cut wood. But not like a dumbass.
-							// First, look for the top.
-							int topLocation;
-							for (topLocation = yA; topLocation < 255; ++topLocation) {
-								Block logBlock = world.getBlockAt(xA,
-										topLocation, zA);
-								if ((!logBlock.getType().equals(Material.LOG))
-										|| (logBlock.getData() != (byte) 2)) {
-									--topLocation;
-									break;
-								}
-							}
-							// And now, chop the wood !
-							for (int yB = topLocation; (yB >= yA) && (axe > 0); --yB) {
-								Block toCut = world.getBlockAt(xA, yB, zA);
-								toCut.setType(Material.AIR);
-								--axe;
-								++wood;
-							}
-							block.setType(Material.SAPLING);
-							block.setData((byte) 2);
-						}
-						break;
-					}
-					case CHEST: {
-						// Time for deposit.
-						Chest chest = (Chest) block.getState();
-						makeDeposit(chest);
-						// And for retrieval.
-						// (Tools, seeds, saplings).
-						lookForStuff(chest);
-						break;
-					}
-					default:
-						break;
-					}
-				}
-			}
-		}
-
-	}
-
 	private void lookForStuff(Chest chest) {
 		Inventory inventory = chest.getInventory();
 		int size = inventory.getSize();
@@ -591,8 +418,25 @@ public class FarmerInfo implements WorkerInfo {
 		return result;
 	}
 
+	/**
+	 * Perform earth work at the specified location.
+	 * 
+	 * @param world
+	 *            World where the work takes place.
+	 * @param xA
+	 *            X-coordinate of the block to modify.
+	 * @param zA
+	 *            Y-coordinate of the block to modify.
+	 * @param yA
+	 *            Z-coordinate of the block to modify.
+	 * @param block
+	 *            Block to test.
+	 * @param material
+	 *            Material of the block to test/modify.
+	 * @return true if some work occurs.
+	 */
 	private boolean doEarthWork(World world, int xA, int zA, int yA,
-			Block block, Material material, Material lastMarker) {
+			Block block, Material material) {
 		boolean result = false;
 		if ((overrideMarker != null) && (lastMarker == null)) {
 			lastMarker = overrideMarker;
@@ -671,6 +515,19 @@ public class FarmerInfo implements WorkerInfo {
 		return result;
 	}
 
+	/**
+	 * Try to plan sugar cane.
+	 * 
+	 * @param block
+	 *            Tested block.
+	 * @param material
+	 *            Material of tested block.
+	 * @param above
+	 *            Block above the tested one.
+	 * @param aboveMaterial
+	 *            Material of the block above the tested one.
+	 * @return true if the farmer can plant a sugar cane.
+	 */
 	private boolean plantSugarCane(Block block, Material material, Block above,
 			Material aboveMaterial) {
 		boolean result = false;
@@ -688,6 +545,19 @@ public class FarmerInfo implements WorkerInfo {
 		return result;
 	}
 
+	/**
+	 * Check if the block is clean for sugar cane plant.
+	 * 
+	 * @param block
+	 *            Tested block.
+	 * @param material
+	 *            Tested block material.
+	 * @param above
+	 *            Block above the tested block.
+	 * @param aboveMaterial
+	 *            Material of the block above the tested one.
+	 * @return true if the tested block can be used for planting sugar cane.
+	 */
 	private boolean cleanBlockForCane(Block block, Material material,
 			Block above, Material aboveMaterial) {
 		boolean ready = false;
@@ -703,6 +573,19 @@ public class FarmerInfo implements WorkerInfo {
 		return ready;
 	}
 
+	/**
+	 * Check if the block is clean for earth work.
+	 * 
+	 * @param block
+	 *            Tested block.
+	 * @param material
+	 *            Tested block material.
+	 * @param above
+	 *            Block above the tested block.
+	 * @param aboveMaterial
+	 *            Material of the block above the tested one.
+	 * @return true if the tested block can be used for earth work.
+	 */
 	private boolean cleanBlock(Block block, Material material, Block above,
 			Material aboveMaterial) {
 		boolean ready = true;
@@ -732,11 +615,152 @@ public class FarmerInfo implements WorkerInfo {
 		return ready;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
-	public void setConfiguration(Configuration cnf) {
-		horizontalScan = cnf.getHorizontalRange();
-		verticalAbove = cnf.getVerticalAbove();
-		verticalBelow = cnf.getVerticalBelow();
+	protected void scan(Block block, World world, int xA, int yA, int zA) {
+		Material material = block.getType();
+		byte metaData = block.getData();
+
+		// So, What can we sense ?
+		/*
+		 * Markers are the following : - Gravel enable wheat work. - Sandstone
+		 * enable sugar cane work. - Wood enable tree work. - Cobblestone enable
+		 * melon work. - Stone brick enable pumpkin work.
+		 */
+
+		switch (material) {
+		// Markers detection.
+		case GRAVEL:
+		case SANDSTONE:
+		case WOOD:
+		case COBBLESTONE:
+		case SMOOTH_BRICK:
+			lastMarker = material;
+			break;
+
+		// Harvest part.
+		case CROPS: {
+			// Whatever happens, we harvest crops.
+			// Markers are only for tool use.
+			if (metaData == (byte) 7) { // Ready to harvest.
+				++wheat;
+				wheatSeed += (int) (Math.random() * 2);
+				if (wheatSeed > MAX_AMOUNT) {
+					wheatSeed = MAX_AMOUNT;
+				}
+				// We assume that crop harvesting will procure at
+				// least one seed.
+				block.setData((byte) 0);
+			}
+			break;
+		}
+		case SUGAR_CANE_BLOCK: {
+			// We first met sugar cane.
+			// All the sugar cane block above will be harvest.
+			int topLocation;
+			for (topLocation = yA; topLocation < 255; ++topLocation) {
+				Block logBlock = world.getBlockAt(xA, topLocation, zA);
+				if (!logBlock.getType().equals(Material.SUGAR_CANE_BLOCK)) {
+					--topLocation;
+					break;
+				}
+			}
+			// And now, chop the wood !
+			for (int yB = topLocation; yB > yA; --yB) {
+				Block toCut = world.getBlockAt(xA, yB, zA);
+				toCut.setType(Material.AIR);
+				++sugarCane;
+			}
+			break;
+		}
+		case MELON_BLOCK: {
+			// The melon harvesting is a bit tweaked.
+			// We lower the slice amount, but automatically add
+			// a chance to get a melon seed.
+			block.setType(Material.AIR);
+			melon += 1 + (int) (Math.random() * 6);
+			melonSeed += (int) (Math.random() * 1.5);
+			if (melonSeed > MAX_AMOUNT) {
+				melonSeed = MAX_AMOUNT;
+			}
+			break;
+		}
+		case PUMPKIN: {
+			block.setType(Material.AIR);
+			++pumpkin;
+			// For now, pumpkin seeds can only be provided by
+			// players.
+			break;
+		}
+
+		// Work part.
+		// This is where we require tools.
+		case DIRT:
+		case GRASS:
+		case SOIL:
+			if (doEarthWork(world, xA, zA, yA, block, material)) {
+				lastMarker = null;
+			}
+			break;
+		case SAND: {
+			if (Material.SANDSTONE.equals(lastMarker)) {
+				Block above = world.getBlockAt(xA, yA + 1, zA);
+				Material aboveMaterial = above.getType();
+
+				if (plantSugarCane(block, material, above, aboveMaterial)) {
+					lastMarker = null;
+				}
+			}
+			break;
+		}
+		case LOG: {
+			if ((Material.WOOD.equals(lastMarker) || Material.WOOD
+					.equals(overrideMarker)) && (metaData == 2) && (axe > 0)) {
+				// Time to cut wood. But not like a dumbass.
+				// First, look for the top.
+				int topLocation;
+				for (topLocation = yA; topLocation < 255; ++topLocation) {
+					Block logBlock = world.getBlockAt(xA, topLocation, zA);
+					if ((!logBlock.getType().equals(Material.LOG))
+							|| (logBlock.getData() != (byte) 2)) {
+						--topLocation;
+						break;
+					}
+				}
+				// And now, chop the wood !
+				for (int yB = topLocation; (yB >= yA) && (axe > 0); --yB) {
+					Block toCut = world.getBlockAt(xA, yB, zA);
+					toCut.setType(Material.AIR);
+					--axe;
+					++wood;
+				}
+				block.setType(Material.SAPLING);
+				block.setData((byte) 2);
+			}
+			break;
+		}
+		case CHEST: {
+			// Time for deposit.
+			Chest chest = (Chest) block.getState();
+			makeDeposit(chest);
+			// And for retrieval.
+			// (Tools, seeds, saplings).
+			lookForStuff(chest);
+			break;
+		}
+		default:
+			break;
+		}
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	protected void preColumnScan(World world) {
+		lastMarker = null;
 	}
 
 }

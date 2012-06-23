@@ -25,6 +25,7 @@ import org.bukkit.entity.Villager;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
+import org.bukkit.event.world.WorldSaveEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
@@ -35,8 +36,10 @@ import org.randomgd.bukkit.workers.info.ButcherInfo;
 import org.randomgd.bukkit.workers.info.FarmerInfo;
 import org.randomgd.bukkit.workers.info.GolemInfo;
 import org.randomgd.bukkit.workers.info.LibrarianInfo;
+import org.randomgd.bukkit.workers.info.PriestInfo;
 import org.randomgd.bukkit.workers.info.WorkerInfo;
 import org.randomgd.bukkit.workers.util.Configuration;
+import org.randomgd.bukkit.workers.util.GeneralInformation;
 import org.randomgd.bukkit.workers.util.WorkerCreator;
 
 /**
@@ -44,55 +47,9 @@ import org.randomgd.bukkit.workers.util.WorkerCreator;
  */
 public class WorkerHandler extends JavaPlugin implements Listener {
 
-	/**
-	 * Set of material that can be smelt.
-	 */
-	public static final Set<Material> SMELTABLE = new HashSet<Material>();
 	{
-		SMELTABLE.add(Material.CACTUS);
-		SMELTABLE.add(Material.CLAY_BALL);
-		SMELTABLE.add(Material.COBBLESTONE);
-		SMELTABLE.add(Material.GOLD_ORE);
-		SMELTABLE.add(Material.IRON_ORE);
-		// TODO SMELTABLE.add(Material.LOG);
-		SMELTABLE.add(Material.RAW_BEEF);
-		SMELTABLE.add(Material.RAW_CHICKEN);
-		SMELTABLE.add(Material.RAW_FISH);
-		SMELTABLE.add(Material.SAND);
-	}
-
-	/**
-	 * Set of material a villager is authorized to mine.
-	 */
-	public static final Set<Material> MINABLE = new HashSet<Material>();
-	{
-		MINABLE.add(Material.STONE);
-		MINABLE.add(Material.GRASS);
-		MINABLE.add(Material.DIRT);
-		MINABLE.add(Material.COBBLESTONE);
-		MINABLE.add(Material.SAND);
-		MINABLE.add(Material.GRAVEL);
-		MINABLE.add(Material.GOLD_ORE);
-		MINABLE.add(Material.IRON_ORE);
-		MINABLE.add(Material.COAL_ORE);
-		MINABLE.add(Material.LAPIS_ORE);
-		MINABLE.add(Material.SANDSTONE);
-		MINABLE.add(Material.SOIL);
-		MINABLE.add(Material.REDSTONE_ORE);
-		MINABLE.add(Material.GLOWING_REDSTONE_ORE);
-		MINABLE.add(Material.NETHERRACK);
-		MINABLE.add(Material.SOUL_SAND);
-		MINABLE.add(Material.GLOWSTONE);
-	}
-
-	/**
-	 * Set of material requiring iron pickaxe.
-	 */
-	public static final Set<Material> HARDSTUFF = new HashSet<Material>();
-	{
-		HARDSTUFF.add(Material.GOLD_ORE);
-		HARDSTUFF.add(Material.LAPIS_ORE);
-		HARDSTUFF.add(Material.REDSTONE_ORE);
+		// Ouch, it's ugly ! VERY VERY ugly.
+		new GeneralInformation();
 	}
 
 	/**
@@ -147,7 +104,10 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 				Villager.Profession.BUTCHER, ButcherInfo.class,
 				ChatColor.DARK_GRAY + "This villager is now a butcher.",
 				"usefulvillagers.jobassign.butcher"));
-
+		PROFESSION_TRIGGER.put(Material.GLASS_BOTTLE, new WorkerCreator(
+				Villager.Profession.PRIEST, PriestInfo.class,
+				ChatColor.DARK_GRAY + "This villager is now a priest.",
+				"usefulvillagers.jobassign.priest"));
 	}
 
 	/**
@@ -183,6 +143,9 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 		workerStack = new HashMap<UUID, WorkerInfo>();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void onEnable() {
 		FileConfiguration configuration = getConfig();
@@ -241,10 +204,13 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 					pool.clear();
 				}
 			}
-		}, 150, entityUpdatePeriod);
+		}, 15, entityUpdatePeriod);
 
 	}
 
+	/**
+	 * Retrieve villager information from the disk.
+	 */
 	@SuppressWarnings("unchecked")
 	private void getWorkerInfoFromDisk() {
 		// Populate the worker map.
@@ -276,8 +242,18 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 		}
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void onDisable() {
+		serializeVillagerData();
+	}
+
+	/**
+	 * Serialize villagers information on disk.
+	 */
+	private void serializeVillagerData() {
 		// Populate the worker map.
 		File directory = getDataFolder();
 		if (!directory.exists()) {
@@ -297,6 +273,7 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 				output.writeObject(workerStack);
 				output.flush();
 				output.close();
+				System.out.println("Villagers' data serialized.");
 			} catch (Exception ex) {
 				// Ouch ...
 				System.out
@@ -304,6 +281,11 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 				ex.printStackTrace();
 			}
 		}
+	}
+
+	@EventHandler
+	public void onWorldSave(WorldSaveEvent event) {
+		serializeVillagerData();
 	}
 
 	@EventHandler
@@ -368,6 +350,19 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 		}
 	}
 
+	/**
+	 * Transfer intems from player to worker/villager.
+	 * 
+	 * @param info
+	 *            Villager/worker information structure.
+	 * @param player
+	 *            Player.
+	 * @param stack
+	 *            Item stack.
+	 * @param material
+	 *            Type of material to transfer.
+	 * @return true if the transaction has been accepted.
+	 */
 	private boolean give(WorkerInfo info, Player player, ItemStack stack,
 			Material material) {
 		boolean result = info.give(material, player);

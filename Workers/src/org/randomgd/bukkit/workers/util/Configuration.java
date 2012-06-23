@@ -7,7 +7,80 @@ import org.bukkit.configuration.file.FileConfiguration;
  */
 public final class Configuration {
 
-	// TODO do the same for other professions.
+	public static class Priest {
+		private int horizontalRange;
+
+		private int verticalBelow;
+
+		private int verticalAbove;
+
+		private int healingCooldown;
+
+		private int burningCooldown;
+
+		private int healPerDust;
+
+		private int burnPerRod;
+
+		private int radius;
+
+		private int period;
+
+		private int burnPower;
+
+		public Priest(FileConfiguration configuration) {
+			horizontalRange = configuration.getInt("priest.horizontalrange");
+			verticalBelow = configuration.getInt("priest.verticalbelow");
+			verticalAbove = configuration.getInt("priest.verticalabove");
+			healingCooldown = configuration.getInt("priest.healingcooldown");
+			burningCooldown = configuration.getInt("priest.burningcooldown");
+			healPerDust = configuration.getInt("priest.healperdust");
+			burnPerRod = configuration.getInt("priest.burnperrod");
+			radius = configuration.getInt("priest.radius");
+			period = configuration.getInt("priest.check");
+			burnPower = configuration.getInt("priest.burnpower");
+		}
+
+		public final int getHorizontalRange() {
+			return horizontalRange;
+		}
+
+		public final int getVerticalBelow() {
+			return verticalBelow;
+		}
+
+		public final int getVerticalAbove() {
+			return verticalAbove;
+		}
+
+		public final int getHealingCooldown() {
+			return healingCooldown;
+		}
+
+		public final int getBurningCooldown() {
+			return burningCooldown;
+		}
+
+		public final int getHealPerDust() {
+			return healPerDust;
+		}
+
+		public final int getBurnPerRod() {
+			return burnPerRod;
+		}
+
+		public final int getRadius() {
+			return radius;
+		}
+
+		public final int getPeriod() {
+			return period;
+		}
+
+		public final int getBurnPower() {
+			return burnPower;
+		}
+	}
 
 	/**
 	 * Specific blacksmith configuration.
@@ -76,6 +149,8 @@ public final class Configuration {
 
 	private Blacksmith blacksmith;
 
+	private Priest priest;
+
 	/**
 	 * Constructor.
 	 * 
@@ -93,10 +168,15 @@ public final class Configuration {
 		butcherRadius = configuration.getInt("butcher.radius");
 		butcherShearPeriod = configuration.getInt("butcher.shear");
 		blacksmith = new Blacksmith(configuration);
+		priest = new Priest(configuration);
 	}
 
 	public final Blacksmith getBlacksmithConfiguration() {
 		return blacksmith;
+	}
+
+	public final Priest getPriestConfiguration() {
+		return priest;
 	}
 
 	public final int getHorizontalRange() {

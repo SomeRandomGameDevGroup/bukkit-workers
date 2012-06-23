@@ -63,6 +63,9 @@ public class GolemInfo implements WorkerInfo {
 		return result;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void perform(Entity entity, int x, int y, int z, World world) {
 		if (torch > 0) {
@@ -78,6 +81,9 @@ public class GolemInfo implements WorkerInfo {
 		}
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void setConfiguration(Configuration cnf) {
 		// Golem Strong ! Golem no need configuration !

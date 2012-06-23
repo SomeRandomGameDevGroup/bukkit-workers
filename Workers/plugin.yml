@@ -1,5 +1,5 @@
 name: UsefulVillagers
-version: 0.3.3
+version: 0.3.4
 author: Some Random Gamedev
 website: http://dev.bukkit.org/server-mods/usefulvillagers/
 
@@ -13,9 +13,13 @@ permissions:
           usefulvillagers.jobassign.librarian: true
           usefulvillagers.jobassign.butcher: true
           usefulvillagers.jobassign.blacksmith: true
+          usefulvillagers.jobassign.priest: true
           usefulvillagers.jobassign.miner: true
           usefulvillagers.jobassign.seeder: true
           usefulvillagers.jobassign.lumberjack: true
+    usefulvillagers.jobassign.priest:
+       description: Give access to priest job selection.
+       default: op
     usefulvillagers.jobassign.farmer:
        description: Give access to farmer job selection.
        default: op

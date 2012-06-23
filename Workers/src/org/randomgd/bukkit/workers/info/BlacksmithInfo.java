@@ -22,11 +22,12 @@ import org.randomgd.bukkit.workers.ToolUsage;
 import org.randomgd.bukkit.workers.WorkerHandler;
 import org.randomgd.bukkit.workers.util.ChestHandler;
 import org.randomgd.bukkit.workers.util.Configuration;
+import org.randomgd.bukkit.workers.util.GeneralInformation;
 
 /**
  * Information about blacksmith activity.
  */
-public class BlacksmithInfo implements WorkerInfo {
+public class BlacksmithInfo extends ScannerInfo {
 
 	/**
 	 * Unique Identifier.
@@ -62,13 +63,6 @@ public class BlacksmithInfo implements WorkerInfo {
 	 */
 	private static final String HARD_STUFF_MINING_INFO = ChatColor.GRAY
 			+ "I can break hard stuff.";
-
-	// Seriously : I should make a 'ScanningEntityInfo' to mutualize this.
-	private transient int horizontalScan;
-
-	private transient int verticalBelow;
-
-	private transient int verticalAbove;
 
 	private transient Set<Furnace> furnaces;
 
@@ -120,6 +114,9 @@ public class BlacksmithInfo implements WorkerInfo {
 		canMine = false;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void printInfoToPlayer(Player player) {
 		if (!canMine) {
@@ -138,6 +135,9 @@ public class BlacksmithInfo implements WorkerInfo {
 		}
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public boolean give(Material material, Player player) {
 		boolean result = false;
@@ -186,76 +186,6 @@ public class BlacksmithInfo implements WorkerInfo {
 	}
 
 	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public void perform(Entity entity, int x, int y, int z, World world) {
-		if ((y > 252) || (y < verticalBelow)) { // Magic number
-			// A farmer which is too high to operate.
-			return;
-		}
-		// Let's find a furnace AND a chest.
-		// The blacksmith (for a change) does not store a thing.
-		// It will transfer stuff from chest to furnace and from furnace to
-		// chest.
-		furnaces.clear();
-		chest.clear();
-		miningColumn.clear();
-
-		for (int xOffset = -horizontalScan; xOffset <= horizontalScan; ++xOffset) {
-			int xA = x + xOffset;
-			for (int zOffset = -horizontalScan; zOffset <= horizontalScan; ++zOffset) {
-				int zA = z + zOffset;
-				for (int yOffset = -verticalBelow; yOffset <= verticalAbove; ++yOffset) {
-					int yA = y + yOffset;
-					Block block = world.getBlockAt(xA, yA, zA);
-					Material material = block.getType();
-					switch (material) {
-					case FURNACE: {
-						Furnace furnace = (Furnace) block.getState();
-						furnaces.add(furnace);
-						break;
-					}
-					case CHEST: {
-						Chest ch = (Chest) block.getState();
-						chest.add(ch);
-						break;
-					}
-					case IRON_BLOCK: {
-						if (canMine) {
-							// Mining column !
-							miningColumn.add(block.getLocation());
-						}
-						break;
-					}
-					default:
-						break;
-					}
-				}
-			}
-		}
-
-		boolean hasOneSlotFree = false;
-
-		if (chest.isEmpty()) {
-			return;
-		} else {
-			// Look for at least one free slot.
-			hasOneSlotFree = ChestHandler.hasFreeSlot(chest);
-		}
-
-		if (!furnaces.isEmpty()) {
-			doFurnaceWork();
-		}
-
-		if (hasOneSlotFree && canMine) {
-			checkPickaxes();
-
-			doMineWork(world);
-		}
-	}
-
-	/**
 	 * Perform mine work based on scanned area.
 	 * 
 	 * @param world
@@ -292,10 +222,10 @@ public class BlacksmithInfo implements WorkerInfo {
 					} else {
 						// Is it a block to mine ?
 						Material bType = blk.getType();
-						if (WorkerHandler.MINABLE.contains(bType)) {
+						if (GeneralInformation.MINABLE.contains(bType)) {
 							// Interesting.
 							if ((blockY > height)
-									&& (ironPickaxe > 0 || !WorkerHandler.HARDSTUFF
+									&& (ironPickaxe > 0 || !GeneralInformation.HARDSTUFF
 											.contains(bType))) {
 								height = blockY;
 								toMine = i;
@@ -351,8 +281,8 @@ public class BlacksmithInfo implements WorkerInfo {
 	 */
 	private boolean shallMine(Material type) {
 		boolean mineIt = false;
-		if (WorkerHandler.MINABLE.contains(type)) {
-			if (WorkerHandler.HARDSTUFF.contains(type)) {
+		if (GeneralInformation.MINABLE.contains(type)) {
+			if (GeneralInformation.HARDSTUFF.contains(type)) {
 				if (ironPickaxe > 0) {
 					--ironPickaxe;
 					mineIt = true;
@@ -428,7 +358,9 @@ public class BlacksmithInfo implements WorkerInfo {
 
 	/**
 	 * Check a furnace for new/current job.
-	 * @param inventory Furnace inventory.
+	 * 
+	 * @param inventory
+	 *            Furnace inventory.
 	 */
 	private void checkFurnace(FurnaceInventory inventory) {
 		// The furnace is ready for a new job.
@@ -443,7 +375,7 @@ public class BlacksmithInfo implements WorkerInfo {
 					int amount = stack.getAmount();
 					if (amount > 0) {
 						Material material = stack.getType();
-						if (WorkerHandler.SMELTABLE.contains(material)) {
+						if (GeneralInformation.SMELTABLE.contains(material)) {
 							// Here we go. Stack this.
 							nextJob = material;
 							maxToGet = stack.getMaxStackSize();
@@ -461,9 +393,13 @@ public class BlacksmithInfo implements WorkerInfo {
 
 	/**
 	 * Start a new furnace job.
-	 * @param inventory Furnace inventory.
-	 * @param type Type of material to smelt.
-	 * @param toTransfer Amount of material to transfer in furnace.
+	 * 
+	 * @param inventory
+	 *            Furnace inventory.
+	 * @param type
+	 *            Type of material to smelt.
+	 * @param toTransfer
+	 *            Amount of material to transfer in furnace.
 	 */
 	private void startFurnaceJob(FurnaceInventory inventory, Material type,
 			int toTransfer) {
@@ -548,17 +484,109 @@ public class BlacksmithInfo implements WorkerInfo {
 	public void setConfiguration(Configuration cnf) {
 		// Nothing special.
 		// Room based stuff will occur later.
-		Configuration.Blacksmith blk = cnf.getBlacksmithConfiguration();
-		horizontalScan = blk.getHorizontalRange();
-		verticalAbove = blk.getVerticalAbove();
-		verticalBelow = blk.getVerticalBelow();
+		super.setConfiguration(cnf);
 		furnaces = new HashSet<Furnace>();
 		chest = new HashSet<Chest>();
 		miningColumn = new LinkedList<Location>();
 		lastMining = System.currentTimeMillis();
 		currentCooldown = 0;
+		Configuration.Blacksmith blk = cnf.getBlacksmithConfiguration();
 		miningCooldown = blk.getMiningCooldown();
 		miningDepth = blk.getMiningDepth();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	protected int extractVerticalAbove(Configuration cnf) {
+		Configuration.Blacksmith blk = cnf.getBlacksmithConfiguration();
+		return blk.getVerticalAbove();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	protected int extractVerticalBelow(Configuration cnf) {
+		Configuration.Blacksmith blk = cnf.getBlacksmithConfiguration();
+		return blk.getVerticalBelow();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	protected int extractHorizontalScan(Configuration cnf) {
+		Configuration.Blacksmith blk = cnf.getBlacksmithConfiguration();
+		return blk.getHorizontalRange();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	protected void scan(Block block, World world, int xA, int yA, int zA) {
+		Material material = block.getType();
+		switch (material) {
+		case FURNACE: {
+			Furnace furnace = (Furnace) block.getState();
+			furnaces.add(furnace);
+			break;
+		}
+		case CHEST: {
+			Chest ch = (Chest) block.getState();
+			chest.add(ch);
+			break;
+		}
+		case IRON_BLOCK: {
+			if (canMine) {
+				// Mining column !
+				miningColumn.add(block.getLocation());
+			}
+			break;
+		}
+		default:
+			break;
+		}
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	protected void preScan(World world) {
+		// Let's find a furnace AND a chest.
+		// The blacksmith (for a change) does not store a thing.
+		// It will transfer stuff from chest to furnace and from furnace to
+		// chest.
+		furnaces.clear();
+		chest.clear();
+		miningColumn.clear();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	protected void postScan(World world, Entity entity) {
+		boolean hasOneSlotFree = false;
+
+		if (chest.isEmpty()) {
+			return;
+		} else {
+			// Look for at least one free slot.
+			hasOneSlotFree = ChestHandler.hasFreeSlot(chest);
+		}
+
+		if (!furnaces.isEmpty()) {
+			doFurnaceWork();
+		}
+
+		if (hasOneSlotFree && canMine) {
+			checkPickaxes();
+
+			doMineWork(world);
+		}
+	}
 }

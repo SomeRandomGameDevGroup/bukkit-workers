@@ -20,6 +20,8 @@ import org.randomgd.bukkit.workers.util.Configuration;
  */
 public class ButcherInfo implements WorkerInfo {
 
+	// TODO Set as Scanner.
+
 	/**
 	 * Serialization identifier.
 	 */

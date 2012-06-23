@@ -18,3 +18,16 @@ blacksmith:
   verticalabove: 2
   miningcooldown: 2500
   miningdepth: 32
+priest:
+  horizontalrange: 2
+  verticalbelow: 2
+  verticalabove: 2
+  healingcooldown: 2500
+  burningcooldown: 25000
+  healperdust: 5
+  burnperrod: 5
+  radius: 5
+  check: 3000
+  burnpower: 50
+
+

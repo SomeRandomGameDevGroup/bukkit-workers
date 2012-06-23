@@ -10,7 +10,6 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -20,7 +19,7 @@ import org.randomgd.bukkit.workers.util.Configuration;
 /**
  * Information about a librarian activity and inventory.
  */
-public class LibrarianInfo implements WorkerInfo {
+public class LibrarianInfo extends ScannerInfo {
 
 	/**
 	 * Unique Class Identifier.
@@ -135,12 +134,6 @@ public class LibrarianInfo implements WorkerInfo {
 	 * Transported books.
 	 */
 	private int book;
-
-	private transient int horizontalScan;
-
-	private transient int verticalBelow;
-
-	private transient int verticalAbove;
 
 	private transient int bookBuildTime;
 
@@ -299,58 +292,6 @@ public class LibrarianInfo implements WorkerInfo {
 		return result;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public void perform(Entity entity, int x, int y, int z, World world) {
-		if ((y > 252) || (y < verticalBelow)) {
-			return;
-		}
-		// Scanning.
-		for (int xOffset = -horizontalScan; xOffset <= horizontalScan; ++xOffset) {
-			int xA = x + xOffset;
-			for (int zOffset = -horizontalScan; zOffset <= horizontalScan; ++zOffset) {
-				int zA = z + zOffset;
-				for (int yOffset = -verticalBelow; yOffset <= verticalAbove; ++yOffset) {
-					int yA = y + yOffset;
-					Block block = world.getBlockAt(xA, yA, zA);
-					Material material = block.getType();
-					switch (material) {
-					case WORKBENCH: {
-						if (cane >= 3) {
-							long now = System.currentTimeMillis();
-							if (now - lastBookTime > bookBuildTime) {
-								cane -= 3;
-								++book;
-								lastBookTime = now;
-							}
-						}
-						break;
-					}
-					case CHEST: {
-						// Time for chest fun !
-						Chest chest = (Chest) block.getState();
-						book = ChestHandler.deposit(Material.BOOK, book, chest);
-						getCaneFromChest(chest);
-					}
-					case BOOKSHELF: {
-						// ## For now, make it simple : every studies get
-						// one point.
-						synchronized (studies) {
-							for (Study i : studies.values()) {
-								i.study();
-							}
-						}
-					}
-					default:
-						break;
-					}
-				}
-			}
-		}
-	}
-
 	private void getCaneFromChest(Chest chest) {
 		if (cane < 3) {
 			Inventory inventory = chest.getInventory();
@@ -368,13 +309,51 @@ public class LibrarianInfo implements WorkerInfo {
 		}
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void setConfiguration(Configuration cnf) {
-		// This code should be mutualized with all the "scanners" !
-		horizontalScan = cnf.getHorizontalRange();
-		verticalAbove = cnf.getVerticalAbove();
-		verticalBelow = cnf.getVerticalBelow();
+		super.setConfiguration(cnf);
 		bookBuildTime = cnf.getLibrarianBookTime();
 		lastBookTime = System.currentTimeMillis();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	protected void scan(Block block, World world, int xA, int yA, int zA) {
+		Material material = block.getType();
+		switch (material) {
+		case WORKBENCH: {
+			if (cane >= 3) {
+				long now = System.currentTimeMillis();
+				if (now - lastBookTime > bookBuildTime) {
+					cane -= 3;
+					++book;
+					lastBookTime = now;
+				}
+			}
+			break;
+		}
+		case CHEST: {
+			// Time for chest fun !
+			Chest chest = (Chest) block.getState();
+			book = ChestHandler.deposit(Material.BOOK, book, chest);
+			getCaneFromChest(chest);
+		}
+		case BOOKSHELF: {
+			// ## For now, make it simple : every studies get
+			// one point.
+			synchronized (studies) {
+				for (Study i : studies.values()) {
+					i.study();
+				}
+			}
+		}
+		default:
+			break;
+		}
 	}
 }

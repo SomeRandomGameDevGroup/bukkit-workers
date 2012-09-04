@@ -301,6 +301,7 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 
 	@EventHandler
 	public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {
+		boolean cancelEvent = false;
 		Player player = event.getPlayer();
 
 		Entity entity = event.getRightClicked();
@@ -318,7 +319,8 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 					player.sendMessage(NO_GIVE_PERMISSION_MESSAGE);
 					return;
 				}
-				reassign = !give(info, player, stack, material);
+				cancelEvent = give(info, player, stack, material);
+				reassign = !cancelEvent;
 			}
 
 			if (reassign) {
@@ -337,6 +339,7 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 						info.setConfiguration(configurationHandler);
 						workerStack.put(id, info);
 						player.sendMessage(creator.getMessage());
+						cancelEvent = true;
 					}
 				}
 			}
@@ -359,6 +362,7 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 				}
 			}
 		}
+		event.setCancelled(cancelEvent);
 	}
 
 	/**

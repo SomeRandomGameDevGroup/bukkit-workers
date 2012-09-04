@@ -1,5 +1,6 @@
 timing:
   listupdate: 300
+  autosave: 60
   entity:
     period: 5
     payload: 200000

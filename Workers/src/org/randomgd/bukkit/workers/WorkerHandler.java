@@ -136,11 +136,17 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 	private Set<Entity> entities = new HashSet<Entity>();
 
 	/**
+	 * Last saving date-time.
+	 */
+	private long lastSave;
+
+	/**
 	 * Constructor.
 	 */
 	public WorkerHandler() {
 		super();
 		workerStack = new HashMap<UUID, WorkerInfo>();
+		lastSave = System.currentTimeMillis();
 	}
 
 	/**
@@ -285,7 +291,12 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 
 	@EventHandler
 	public void onWorldSave(WorldSaveEvent event) {
-		serializeVillagerData();
+		int autosave = configurationHandler.getAutosavePeriod();
+		long current = System.currentTimeMillis();
+		if ((current - lastSave) > autosave) {
+			lastSave = current;
+			serializeVillagerData();
+		}
 	}
 
 	@EventHandler

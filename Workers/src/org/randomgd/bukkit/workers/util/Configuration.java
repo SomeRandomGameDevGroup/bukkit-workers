@@ -151,6 +151,8 @@ public final class Configuration {
 
 	private Priest priest;
 
+	private int autosavePeriod;
+
 	/**
 	 * Constructor.
 	 * 
@@ -167,8 +169,13 @@ public final class Configuration {
 		librarianBookTime = configuration.getInt("librarian.bookproduction");
 		butcherRadius = configuration.getInt("butcher.radius");
 		butcherShearPeriod = configuration.getInt("butcher.shear");
+		autosavePeriod = configuration.getInt("timing.autosave") * 1000;
 		blacksmith = new Blacksmith(configuration);
 		priest = new Priest(configuration);
+	}
+
+	public final int getAutosavePeriod() {
+		return autosavePeriod;
 	}
 
 	public final Blacksmith getBlacksmithConfiguration() {

@@ -362,11 +362,15 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 				}
 			}
 		}
+		// If the event has previously been cancelled, cancel it.
+		// (Prevent overwriting other plugin effects).
+		boolean previouslyCancelled = event.isCancelled();
+		cancelEvent |= previouslyCancelled;
 		event.setCancelled(cancelEvent);
 	}
 
 	/**
-	 * Transfer intems from player to worker/villager.
+	 * Transfer items from player to worker/villager.
 	 * 
 	 * @param info
 	 *            Villager/worker information structure.

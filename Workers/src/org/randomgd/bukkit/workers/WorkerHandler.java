@@ -156,10 +156,10 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 	public void onEnable() {
 		FileConfiguration configuration = getConfig();
 		BukkitScheduler scheduler = getServer().getScheduler();
-		
+
 		// Copy the default configuration if it hasn't been copied already
-		configuration.saveDefaultConfig();
-		
+		saveDefaultConfig();
+
 		// Update old configurations with new key-value pairs
 		configuration.options().copyDefaults(true);
 

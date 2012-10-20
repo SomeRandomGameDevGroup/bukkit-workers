@@ -8,4 +8,3 @@ public interface Disposable {
 	void dispose();
 
 }
-Just to prove SRGD wrong

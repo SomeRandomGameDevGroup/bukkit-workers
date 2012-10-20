@@ -8,6 +8,9 @@ scanning:
   horizontalrange: 1
   verticalbelow: 2
   verticalabove: 2
+chest:
+  depositymarker: true
+  retrievalmarker: true
 librarian:
   bookproduction: 1000
 butcher:

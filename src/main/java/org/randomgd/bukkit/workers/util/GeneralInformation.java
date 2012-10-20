@@ -26,6 +26,7 @@ public class GeneralInformation {
 		SMELTABLE.add(Material.RAW_BEEF);
 		SMELTABLE.add(Material.RAW_CHICKEN);
 		SMELTABLE.add(Material.RAW_FISH);
+		SMELTABLE.add(Material.PORK);
 		SMELTABLE.add(Material.SAND);
 	}
 

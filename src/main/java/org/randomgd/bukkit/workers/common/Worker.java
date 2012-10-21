@@ -63,7 +63,8 @@ public class Worker implements Executable {
 		int y = currentLocation.getBlockY();
 		int z = currentLocation.getBlockZ();
 		String information = String.format("%s [%s] (%d, %d, %d)",
-				id.toString(), entity.getType(), x, y, z);
+				id.toString(), entity.getType(), Integer.valueOf(x),
+				Integer.valueOf(y), Integer.valueOf(z));
 		return information;
 	}
 

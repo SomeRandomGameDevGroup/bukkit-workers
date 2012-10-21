@@ -342,6 +342,7 @@ public class LibrarianInfo extends ScannerInfo {
 			Chest chest = (Chest) block.getState();
 			book = ChestHandler.deposit(Material.BOOK, book, chest);
 			getCaneFromChest(chest);
+			break;
 		}
 		case BOOKSHELF: {
 			// ## For now, make it simple : every studies get
@@ -351,6 +352,7 @@ public class LibrarianInfo extends ScannerInfo {
 					i.study();
 				}
 			}
+			break;
 		}
 		default:
 			break;

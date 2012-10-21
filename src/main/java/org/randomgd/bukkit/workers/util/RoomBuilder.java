@@ -111,8 +111,7 @@ public class RoomBuilder {
 			}
 
 			// At the end, let's build the room.
-			if ((furnaceSimplePosition != null)
-					&& (chestSimplePosition != null)
+			if ((chestSimplePosition != null)
 					&& (workbenchSimplePosition != null)) {
 				System.out.println("We got a fully fonctional room !");
 			} else {

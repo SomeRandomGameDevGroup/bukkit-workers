@@ -174,11 +174,12 @@ public final class ChestHandler {
 	public static int get(Material material, int toRetrieve,
 			Collection<Chest> chest) {
 		int result = 0;
+		int buffer = toRetrieve;
 		for (Chest j : chest) {
 			int retrieved = ChestHandler.get(material, toRetrieve, j);
 			result += retrieved;
-			toRetrieve -= retrieved;
-			if (toRetrieve == 0) {
+			buffer -= retrieved;
+			if (buffer == 0) {
 				break;
 			}
 		}

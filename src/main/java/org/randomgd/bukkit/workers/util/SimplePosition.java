@@ -65,6 +65,7 @@ public class SimplePosition implements Comparable<SimplePosition> {
 
 	@Override
 	public String toString() {
-		return String.format("(%d, %d, %d)", x, y, z);
+		return String.format("(%d, %d, %d)", Integer.valueOf(x),
+				Integer.valueOf(y), Integer.valueOf(z));
 	}
 }

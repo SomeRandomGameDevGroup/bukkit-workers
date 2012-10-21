@@ -55,10 +55,10 @@ import com.google.gson.stream.JsonWriter;
  */
 public class WorkerHandler extends JavaPlugin implements Listener {
 
-	{
-		// Ouch, it's ugly ! VERY VERY ugly.
-		new GeneralInformation();
-	}
+	/**
+	 * General utility informations.
+	 */
+	public static final GeneralInformation GENERAL_INFORMATION = new GeneralInformation();
 
 	/**
 	 * Message displayed if the player doesn't have the permission to interact
@@ -166,6 +166,14 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 	 * {@inheritDoc}
 	 */
 	@Override
+	public void onDisable() {
+		serializeVillagerData();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
 	public void onEnable() {
 		FileConfiguration configuration = getConfig();
 		BukkitScheduler scheduler = getServer().getScheduler();
@@ -196,27 +204,7 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 		scheduler.scheduleSyncRepeatingTask(this, new Runnable() {
 			@Override
 			public void run() {
-				synchronized (entities) {
-					synchronized (pool) {
-						Set<Entity> buffer = new HashSet<Entity>();
-						Set<Entity> added = new HashSet<Entity>();
-						for (World i : getServer().getWorlds()) {
-							buffer.addAll(i.getEntitiesByClass(Villager.class));
-							buffer.addAll(i.getEntitiesByClass(IronGolem.class));
-						}
-						added.addAll(buffer);
-						added.removeAll(entities);
-						// In buffer remains all the entities that have been
-						// added since last time.
-						for (Entity i : added) {
-							pool.add(new Worker(i, workerStack));
-						}
-						entities.clear();
-						entities.addAll(buffer);
-						buffer.clear();
-						added.clear();
-					}
-				}
+				checkEntities();
 			}
 		}, 10, listUpdatePeriod);
 
@@ -224,144 +212,9 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 		scheduler.scheduleSyncRepeatingTask(this, new Runnable() {
 			@Override
 			public void run() {
-				synchronized (pool) {
-					ring.tick(configurationHandler.getTimePerUpdate(), pool);
-					pool.clear();
-				}
+				updateEntities();
 			}
 		}, 15, entityUpdatePeriod);
-
-	}
-
-	/**
-	 * Retrieve villager information from the disk.
-	 */
-	@SuppressWarnings("unchecked")
-	private void getWorkerInfoFromDisk() {
-		// Populate the worker map.
-		File directory = getDataFolder();
-		if (!directory.exists()) {
-			directory.mkdir();
-		}
-		if (directory.exists() && directory.isDirectory()) {
-			// We can work now.
-			String path = String.format(DATA_FILE_MASK, directory.getPath(),
-					File.separatorChar);
-			File dataFile = new File(path);
-			if (dataFile.exists() && dataFile.canRead() && dataFile.isFile()) {
-				// Get information from Json format instead.
-				System.out.println("Retrieve villagers informations");
-				try {
-					GsonBuilder builder = new GsonBuilder();
-					WorkerAdapter adapter = new WorkerAdapter();
-					builder.registerTypeAdapter(WorkerInfo.class, adapter);
-					Gson deserializer = builder
-							.setPrettyPrinting()
-							.serializeNulls()
-							.excludeFieldsWithModifiers(Modifier.STATIC,
-									Modifier.TRANSIENT).create();
-					workerStack.clear();
-					FileInputStream input = new FileInputStream(dataFile);
-					JsonReader reader = new JsonReader(new InputStreamReader(
-							input, "UTF-8"));
-					reader.beginArray();
-					while (reader.hasNext()) {
-						WorkerInfo info = deserializer.fromJson(reader,
-								WorkerInfo.class);
-						workerStack.put(adapter.getCurrentUUID(), info);
-					}
-					reader.endArray();
-					reader.close();
-					input.close();
-				} catch (Exception ex) {
-					System.err.println("Villager information retrieval error");
-					ex.printStackTrace();
-				}
-			} else {
-				path = String.format("%s%cworkers.dat", directory.getPath(),
-						File.separatorChar);
-				dataFile = new File(path);
-				if (dataFile.exists() && dataFile.canRead()
-						&& dataFile.isFile()) {
-					try {
-						ObjectInputStream input = new ObjectInputStream(
-								new FileInputStream(dataFile));
-						Object result = input.readObject();
-						// Type erasure, all that stuff ... not good ... noooot
-						// good.
-						input.close();
-						workerStack = (Map<UUID, WorkerInfo>) result;
-					} catch (Exception ex) {
-						// Ouch ...
-						System.out
-								.println("Can't load informations about our fellow workers");
-						ex.printStackTrace();
-					}
-				}
-			}
-		}
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public void onDisable() {
-		serializeVillagerData();
-	}
-
-	/**
-	 * Serialize villagers information on disk.
-	 */
-	private void serializeVillagerData() {
-		// Populate the worker map.
-		File directory = getDataFolder();
-		if (!directory.exists()) {
-			directory.mkdir();
-		}
-		if (directory.exists() && directory.isDirectory()) {
-			// We can work now.
-			String path = String.format(DATA_FILE_MASK, directory.getPath(),
-					File.separatorChar);
-			File dataFile = new File(path);
-			try {
-				GsonBuilder builder = new GsonBuilder();
-				WorkerAdapter adapter = new WorkerAdapter();
-				builder.registerTypeAdapter(WorkerInfo.class, adapter);
-				Gson serializer = builder
-						.setPrettyPrinting()
-						.serializeNulls()
-						.excludeFieldsWithModifiers(Modifier.STATIC,
-								Modifier.TRANSIENT).create();
-				FileOutputStream outputStream = new FileOutputStream(dataFile);
-				JsonWriter writer = new JsonWriter(new OutputStreamWriter(
-						outputStream, "UTF-8"));
-				writer.setSerializeNulls(true);
-				writer.setIndent("    ");
-				writer.beginArray();
-				for (Map.Entry<UUID, WorkerInfo> i : workerStack.entrySet()) {
-					adapter.setCurrentUUID(i.getKey());
-					serializer.toJson(i.getValue(), WorkerInfo.class, writer);
-				}
-				writer.endArray();
-				writer.close();
-				outputStream.close();
-				System.out.println("Villagers serialized to JSon");
-			} catch (Exception ex) {
-				System.out.println("Can't serialize with Gson");
-				ex.printStackTrace();
-			}
-		}
-	}
-
-	@EventHandler
-	public void onWorldSave(WorldSaveEvent event) {
-		int autosave = configurationHandler.getAutosavePeriod();
-		long current = System.currentTimeMillis();
-		if ((current - lastSave) > autosave) {
-			lastSave = current;
-			serializeVillagerData();
-		}
 	}
 
 	@EventHandler
@@ -434,6 +287,85 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 		event.setCancelled(cancelEvent);
 	}
 
+	@EventHandler
+	public void onWorldSave(WorldSaveEvent event) {
+		int autosave = configurationHandler.getAutosavePeriod();
+		long current = System.currentTimeMillis();
+		if ((current - lastSave) > autosave) {
+			lastSave = current;
+			serializeVillagerData();
+		}
+	}
+
+	/**
+	 * Retrieve villager information from the disk.
+	 */
+	@SuppressWarnings("unchecked")
+	private void getWorkerInfoFromDisk() {
+		// Populate the worker map.
+		File directory = getDataFolder();
+		if (!directory.exists()) {
+			directory.mkdir();
+		}
+		if (directory.exists() && directory.isDirectory()) {
+			// We can work now.
+			String path = String.format(DATA_FILE_MASK, directory.getPath(),
+					Character.valueOf(File.separatorChar));
+			File dataFile = new File(path);
+			if (dataFile.exists() && dataFile.canRead() && dataFile.isFile()) {
+				// Get information from Json format instead.
+				System.out.println("Retrieve villagers informations");
+				try {
+					GsonBuilder builder = new GsonBuilder();
+					WorkerAdapter adapter = new WorkerAdapter();
+					builder.registerTypeAdapter(WorkerInfo.class, adapter);
+					Gson deserializer = builder
+							.setPrettyPrinting()
+							.serializeNulls()
+							.excludeFieldsWithModifiers(Modifier.STATIC,
+									Modifier.TRANSIENT).create();
+					workerStack.clear();
+					FileInputStream input = new FileInputStream(dataFile);
+					JsonReader reader = new JsonReader(new InputStreamReader(
+							input, "UTF-8"));
+					reader.beginArray();
+					while (reader.hasNext()) {
+						WorkerInfo info = deserializer.fromJson(reader,
+								WorkerInfo.class);
+						workerStack.put(adapter.getCurrentUUID(), info);
+					}
+					reader.endArray();
+					reader.close();
+					input.close();
+				} catch (Exception ex) {
+					System.err.println("Villager information retrieval error");
+					ex.printStackTrace();
+				}
+			} else {
+				path = String.format("%s%cworkers.dat", directory.getPath(),
+						Character.valueOf(File.separatorChar));
+				dataFile = new File(path);
+				if (dataFile.exists() && dataFile.canRead()
+						&& dataFile.isFile()) {
+					try {
+						ObjectInputStream input = new ObjectInputStream(
+								new FileInputStream(dataFile));
+						Object result = input.readObject();
+						// Type erasure, all that stuff ... not good ... noooot
+						// good.
+						input.close();
+						workerStack = (Map<UUID, WorkerInfo>) result;
+					} catch (Exception ex) {
+						// Ouch ...
+						System.out
+								.println("Can't load informations about our fellow workers");
+						ex.printStackTrace();
+					}
+				}
+			}
+		}
+	}
+
 	/**
 	 * Transfer items from player to worker/villager.
 	 * 
@@ -457,6 +389,87 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 			player.setItemInHand(stack);
 		}
 		return result;
+	}
+
+	/**
+	 * Serialize villagers information on disk.
+	 */
+	private void serializeVillagerData() {
+		// Populate the worker map.
+		File directory = getDataFolder();
+		if (!directory.exists()) {
+			directory.mkdir();
+		}
+		if (directory.exists() && directory.isDirectory()) {
+			// We can work now.
+			String path = String.format(DATA_FILE_MASK, directory.getPath(),
+					Character.valueOf(File.separatorChar));
+			File dataFile = new File(path);
+			try {
+				GsonBuilder builder = new GsonBuilder();
+				WorkerAdapter adapter = new WorkerAdapter();
+				builder.registerTypeAdapter(WorkerInfo.class, adapter);
+				Gson serializer = builder
+						.setPrettyPrinting()
+						.serializeNulls()
+						.excludeFieldsWithModifiers(Modifier.STATIC,
+								Modifier.TRANSIENT).create();
+				FileOutputStream outputStream = new FileOutputStream(dataFile);
+				JsonWriter writer = new JsonWriter(new OutputStreamWriter(
+						outputStream, "UTF-8"));
+				writer.setSerializeNulls(true);
+				writer.setIndent("    ");
+				writer.beginArray();
+				for (Map.Entry<UUID, WorkerInfo> i : workerStack.entrySet()) {
+					adapter.setCurrentUUID(i.getKey());
+					serializer.toJson(i.getValue(), WorkerInfo.class, writer);
+				}
+				writer.endArray();
+				writer.close();
+				outputStream.close();
+				System.out.println("Villagers serialized to JSon");
+			} catch (Exception ex) {
+				System.out.println("Can't serialize with Gson");
+				ex.printStackTrace();
+			}
+		}
+	}
+
+	/**
+	 * List entities to update.
+	 */
+	protected void checkEntities() {
+		synchronized (entities) {
+			synchronized (pool) {
+				Set<Entity> buffer = new HashSet<Entity>();
+				Set<Entity> added = new HashSet<Entity>();
+				for (World i : getServer().getWorlds()) {
+					buffer.addAll(i.getEntitiesByClass(Villager.class));
+					buffer.addAll(i.getEntitiesByClass(IronGolem.class));
+				}
+				added.addAll(buffer);
+				added.removeAll(entities);
+				// In buffer remains all the entities that have been
+				// added since last time.
+				for (Entity i : added) {
+					pool.add(new Worker(i, workerStack));
+				}
+				entities.clear();
+				entities.addAll(buffer);
+				buffer.clear();
+				added.clear();
+			}
+		}
+	}
+
+	/**
+	 * Update managed entities state.
+	 */
+	protected void updateEntities() {
+		synchronized (pool) {
+			ring.tick(configurationHandler.getTimePerUpdate(), pool);
+			pool.clear();
+		}
 	}
 
 }

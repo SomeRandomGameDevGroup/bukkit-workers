@@ -572,21 +572,16 @@ public class BlacksmithInfo extends ScannerInfo {
 	protected void postScan(World world, Entity entity) {
 		boolean hasOneSlotFree = false;
 
-		if (chest.isEmpty()) {
-			return;
-		} else {
+		if (!chest.isEmpty()) {
 			// Look for at least one free slot.
 			hasOneSlotFree = ChestHandler.hasFreeSlot(chest);
-		}
-
-		if (!furnaces.isEmpty()) {
-			doFurnaceWork();
-		}
-
-		if (hasOneSlotFree && canMine) {
-			checkPickaxes();
-
-			doMineWork(world);
+			if (!furnaces.isEmpty()) {
+				doFurnaceWork();
+			}
+			if (hasOneSlotFree && canMine) {
+				checkPickaxes();
+				doMineWork(world);
+			}
 		}
 	}
 }

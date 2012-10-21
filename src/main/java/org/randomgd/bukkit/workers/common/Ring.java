@@ -9,11 +9,11 @@ public class Ring<T extends Executable> {
 
 	protected static class Token<K extends Executable> implements Disposable {
 
-		private Token<K> previous;
+		protected Token<K> previous;
 
-		private Token<K> next;
+		protected Token<K> next;
 
-		private K core;
+		protected K core;
 
 		public Token(K val) {
 			core = val;

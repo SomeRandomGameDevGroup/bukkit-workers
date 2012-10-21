@@ -411,8 +411,7 @@ public class FarmerInfo extends ScannerInfo {
 				room = amount;
 			}
 			result += room;
-			amount -= room;
-			stack.setAmount(amount);
+			stack.setAmount(amount - room);
 			inventory.setItem(i, stack);
 		}
 		return result;

@@ -224,67 +224,96 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 
 		Entity entity = event.getRightClicked();
 		EntityType entityType = entity.getType();
-		ItemStack stack = player.getItemInHand();
-		Material material = stack.getType();
 
 		if (entityType.equals(EntityType.VILLAGER)) {
-			Villager villager = (Villager) entity;
-			UUID id = villager.getUniqueId();
-			WorkerInfo info = workerStack.get(id);
-			boolean reassign = true;
-			if (info != null) {
-				if (!player.hasPermission("usefulvillagers.give")) {
-					player.sendMessage(NO_GIVE_PERMISSION_MESSAGE);
-					return;
-				}
-				cancelEvent = give(info, player, stack, material);
-				reassign = !cancelEvent;
-			}
-
-			if (reassign) {
-				WorkerCreator creator = PROFESSION_TRIGGER.get(material);
-				if (creator != null) {
-					Villager.Profession profession = creator.getProfession();
-					if ((profession != null)
-							&& (!(profession.equals(villager.getProfession()) && (info != null)))) {
-						// It's ok, we can convert it !
-						if (!player.hasPermission(creator.getPermission())) {
-							player.sendMessage(NO_JOB_PERMISSION_MESSAGE);
-							return;
-						}
-						villager.setProfession(profession);
-						info = creator.create();
-						info.setConfiguration(configurationHandler);
-						workerStack.put(id, info);
-						player.sendMessage(creator.getMessage());
-						cancelEvent = true;
-					}
-				}
-			}
-
-			if (info == null) {
-				player.sendMessage(NOT_USEFUL_VILLAGER);
-			}
+			cancelEvent = interactWithVillager(player, entity);
 		} else if (entityType.equals(EntityType.IRON_GOLEM)) {
-			UUID uuid = entity.getUniqueId();
-			WorkerInfo currentInfo = workerStack.get(uuid);
-			if (material.equals(Material.TORCH)) {
-				if (currentInfo == null) {
-					currentInfo = new GolemInfo();
-					workerStack.put(uuid, currentInfo);
-				}
-				give(currentInfo, player, stack, material);
-			} else if (material.equals(Material.STICK)) {
-				if (currentInfo != null) {
-					currentInfo.printInfoToPlayer(player);
-				}
-			}
+			interactWithGolem(player, entity);
 		}
 		// If the event has previously been cancelled, cancel it.
 		// (Prevent overwriting other plugin effects).
 		boolean previouslyCancelled = event.isCancelled();
 		cancelEvent |= previouslyCancelled;
 		event.setCancelled(cancelEvent);
+	}
+
+	/**
+	 * Interact with a villager.
+	 * 
+	 * @param player
+	 *            Trigger entity (the player).
+	 * @param entity
+	 *            Target entity (the villager).
+	 * @return <code>true</code> if the event must be cancelled.
+	 */
+	private boolean interactWithVillager(Player player, Entity entity) {
+		boolean cancelEvent = false;
+		ItemStack stack = player.getItemInHand();
+		Material material = stack.getType();
+		Villager villager = (Villager) entity;
+		UUID id = villager.getUniqueId();
+		WorkerInfo info = workerStack.get(id);
+		boolean reassign = true;
+		if (info != null) {
+			if (!player.hasPermission("usefulvillagers.give")) {
+				player.sendMessage(NO_GIVE_PERMISSION_MESSAGE);
+				return cancelEvent;
+			}
+			cancelEvent = give(info, player, stack, material);
+			reassign = !cancelEvent;
+		}
+
+		if (reassign) {
+			WorkerCreator creator = PROFESSION_TRIGGER.get(material);
+			if (creator != null) {
+				Villager.Profession profession = creator.getProfession();
+				if ((profession != null)
+						&& (!(profession.equals(villager.getProfession()) && (info != null)))) {
+					// It's ok, we can convert it !
+					if (!player.hasPermission(creator.getPermission())) {
+						player.sendMessage(NO_JOB_PERMISSION_MESSAGE);
+						return cancelEvent;
+					}
+					villager.setProfession(profession);
+					info = creator.create();
+					info.setConfiguration(configurationHandler);
+					workerStack.put(id, info);
+					player.sendMessage(creator.getMessage());
+					cancelEvent = true;
+				}
+			}
+		}
+
+		if ((info == null) && configurationHandler.isDisplayedNotManaged()) {
+			player.sendMessage(NOT_USEFUL_VILLAGER);
+		}
+		return cancelEvent;
+	}
+
+	/**
+	 * Interact with golem.
+	 * 
+	 * @param player
+	 *            Interacting player.
+	 * @param entity
+	 *            Target entity (a golem in this case).
+	 */
+	private void interactWithGolem(Player player, Entity entity) {
+		ItemStack stack = player.getItemInHand();
+		Material material = stack.getType();
+		UUID uuid = entity.getUniqueId();
+		WorkerInfo currentInfo = workerStack.get(uuid);
+		if (material.equals(Material.TORCH)) {
+			if (currentInfo == null) {
+				currentInfo = new GolemInfo();
+				workerStack.put(uuid, currentInfo);
+			}
+			give(currentInfo, player, stack, material);
+		} else if (material.equals(Material.STICK)) {
+			if (currentInfo != null) {
+				currentInfo.printInfoToPlayer(player);
+			}
+		}
 	}
 
 	@EventHandler

@@ -153,6 +153,8 @@ public final class Configuration {
 
 	private int autosavePeriod;
 
+	private boolean displayNotManaged;
+
 	/**
 	 * Constructor.
 	 * 
@@ -170,6 +172,7 @@ public final class Configuration {
 		butcherRadius = configuration.getInt("butcher.radius");
 		butcherShearPeriod = configuration.getInt("butcher.shear");
 		autosavePeriod = configuration.getInt("timing.autosave") * 1000;
+		displayNotManaged = configuration.getBoolean("misc.displaynotmanaged");
 		blacksmith = new Blacksmith(configuration);
 		priest = new Priest(configuration);
 	}
@@ -222,4 +225,7 @@ public final class Configuration {
 		return butcherShearPeriod;
 	}
 
+	public final boolean isDisplayedNotManaged() {
+		return displayNotManaged;
+	}
 }

@@ -1,3 +1,5 @@
+misc:
+  displaynotmanaged: false
 timing:
   listupdate: 300
   autosave: 60

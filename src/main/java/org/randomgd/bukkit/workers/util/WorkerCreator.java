@@ -34,6 +34,11 @@ public class WorkerCreator {
 	private String permission;
 
 	/**
+	 * Class descriptor.
+	 */
+	private Class<? extends WorkerInfo> api;
+
+	/**
 	 * Construction.
 	 * 
 	 * @param prf
@@ -50,6 +55,7 @@ public class WorkerCreator {
 		profession = prf;
 		welcomeMessage = wlc;
 		permission = prm;
+		api = cls;
 		try {
 			constructor = cls.getConstructor();
 		} catch (Exception ex) {
@@ -94,5 +100,12 @@ public class WorkerCreator {
 	 */
 	public final String getPermission() {
 		return permission;
+	}
+
+	/**
+	 * @return The class descriptor.
+	 */
+	public final Class<? extends WorkerInfo> getAPI() {
+		return api;
 	}
 }

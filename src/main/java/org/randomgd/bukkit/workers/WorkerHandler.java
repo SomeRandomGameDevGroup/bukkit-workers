@@ -3,8 +3,10 @@ package org.randomgd.bukkit.workers;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.OutputStreamWriter;
+import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,10 +39,16 @@ import org.randomgd.bukkit.workers.info.FarmerInfo;
 import org.randomgd.bukkit.workers.info.GolemInfo;
 import org.randomgd.bukkit.workers.info.LibrarianInfo;
 import org.randomgd.bukkit.workers.info.PriestInfo;
+import org.randomgd.bukkit.workers.info.WorkerAdapter;
 import org.randomgd.bukkit.workers.info.WorkerInfo;
 import org.randomgd.bukkit.workers.util.Configuration;
 import org.randomgd.bukkit.workers.util.GeneralInformation;
 import org.randomgd.bukkit.workers.util.WorkerCreator;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 
 /**
  * Plugin entry point.
@@ -79,6 +87,11 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 	 */
 	private static final String NOT_USEFUL_VILLAGER = ChatColor.GRAY
 			+ "This is not a useful villager.";
+
+	/**
+	 * Mask for data filename.
+	 */
+	private static final String DATA_FILE_MASK = "%s%cworkers.json";
 
 	/**
 	 * A map between item and the triggered/chosen profession.
@@ -232,23 +245,58 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 		}
 		if (directory.exists() && directory.isDirectory()) {
 			// We can work now.
-			String path = String.format("%s%cworkers.dat", directory.getPath(),
+			String path = String.format(DATA_FILE_MASK, directory.getPath(),
 					File.separatorChar);
 			File dataFile = new File(path);
 			if (dataFile.exists() && dataFile.canRead() && dataFile.isFile()) {
+				// Get information from Json format instead.
+				System.out.println("Retrieve villagers informations");
 				try {
-					ObjectInputStream input = new ObjectInputStream(
-							new FileInputStream(dataFile));
-					Object result = input.readObject();
-					// Type erasure, all that stuff ... not good ... noooot
-					// good.
+					GsonBuilder builder = new GsonBuilder();
+					WorkerAdapter adapter = new WorkerAdapter();
+					builder.registerTypeAdapter(WorkerInfo.class, adapter);
+					Gson deserializer = builder
+							.setPrettyPrinting()
+							.serializeNulls()
+							.excludeFieldsWithModifiers(Modifier.STATIC,
+									Modifier.TRANSIENT).create();
+					workerStack.clear();
+					FileInputStream input = new FileInputStream(dataFile);
+					JsonReader reader = new JsonReader(new InputStreamReader(
+							input, "UTF-8"));
+					reader.beginArray();
+					while (reader.hasNext()) {
+						WorkerInfo info = deserializer.fromJson(reader,
+								WorkerInfo.class);
+						workerStack.put(adapter.getCurrentUUID(), info);
+					}
+					reader.endArray();
+					reader.close();
 					input.close();
-					workerStack = (Map<UUID, WorkerInfo>) result;
 				} catch (Exception ex) {
-					// Ouch ...
-					System.out
-							.println("Can't load informations about our fellow workers");
+					System.err.println("Villager information retrieval error");
 					ex.printStackTrace();
+				}
+			} else {
+				path = String.format("%s%cworkers.dat", directory.getPath(),
+						File.separatorChar);
+				dataFile = new File(path);
+				if (dataFile.exists() && dataFile.canRead()
+						&& dataFile.isFile()) {
+					try {
+						ObjectInputStream input = new ObjectInputStream(
+								new FileInputStream(dataFile));
+						Object result = input.readObject();
+						// Type erasure, all that stuff ... not good ... noooot
+						// good.
+						input.close();
+						workerStack = (Map<UUID, WorkerInfo>) result;
+					} catch (Exception ex) {
+						// Ouch ...
+						System.out
+								.println("Can't load informations about our fellow workers");
+						ex.printStackTrace();
+					}
 				}
 			}
 		}
@@ -273,23 +321,34 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 		}
 		if (directory.exists() && directory.isDirectory()) {
 			// We can work now.
-			String path = String.format("%s%cworkers.dat", directory.getPath(),
+			String path = String.format(DATA_FILE_MASK, directory.getPath(),
 					File.separatorChar);
 			File dataFile = new File(path);
 			try {
-				if (!dataFile.exists()) {
-					dataFile.createNewFile();
+				GsonBuilder builder = new GsonBuilder();
+				WorkerAdapter adapter = new WorkerAdapter();
+				builder.registerTypeAdapter(WorkerInfo.class, adapter);
+				Gson serializer = builder
+						.setPrettyPrinting()
+						.serializeNulls()
+						.excludeFieldsWithModifiers(Modifier.STATIC,
+								Modifier.TRANSIENT).create();
+				FileOutputStream outputStream = new FileOutputStream(dataFile);
+				JsonWriter writer = new JsonWriter(new OutputStreamWriter(
+						outputStream, "UTF-8"));
+				writer.setSerializeNulls(true);
+				writer.setIndent("    ");
+				writer.beginArray();
+				for (Map.Entry<UUID, WorkerInfo> i : workerStack.entrySet()) {
+					adapter.setCurrentUUID(i.getKey());
+					serializer.toJson(i.getValue(), WorkerInfo.class, writer);
 				}
-				ObjectOutputStream output = new ObjectOutputStream(
-						new FileOutputStream(dataFile));
-				output.writeObject(workerStack);
-				output.flush();
-				output.close();
-				System.out.println("Villagers' data serialized.");
+				writer.endArray();
+				writer.close();
+				outputStream.close();
+				System.out.println("Villagers serialized to JSon");
 			} catch (Exception ex) {
-				// Ouch ...
-				System.out
-						.println("Can't write informations about our fellow workers");
+				System.out.println("Can't serialize with Gson");
 				ex.printStackTrace();
 			}
 		}

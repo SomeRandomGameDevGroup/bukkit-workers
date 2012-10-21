@@ -14,6 +14,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.logging.Level;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -343,7 +344,8 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 			File dataFile = new File(path);
 			if (dataFile.exists() && dataFile.canRead() && dataFile.isFile()) {
 				// Get information from Json format instead.
-				System.out.println("Retrieve villagers informations");
+				this.getLogger().log(Level.INFO,
+						"Retrieve villagers informations");
 				try {
 					GsonBuilder builder = new GsonBuilder();
 					WorkerAdapter adapter = new WorkerAdapter();
@@ -367,8 +369,8 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 					reader.close();
 					input.close();
 				} catch (Exception ex) {
-					System.err.println("Villager information retrieval error");
-					ex.printStackTrace();
+					getLogger().log(Level.SEVERE,
+							"Villager information retrieval error", ex);
 				}
 			} else {
 				path = String.format("%s%cworkers.dat", directory.getPath(),
@@ -386,9 +388,10 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 						workerStack = (Map<UUID, WorkerInfo>) result;
 					} catch (Exception ex) {
 						// Ouch ...
-						System.out
-								.println("Can't load informations about our fellow workers");
-						ex.printStackTrace();
+						getLogger()
+								.log(Level.SEVERE,
+										"Can't load informations about our fellow workers",
+										ex);
 					}
 				}
 			}
@@ -456,9 +459,9 @@ public class WorkerHandler extends JavaPlugin implements Listener {
 				writer.endArray();
 				writer.close();
 				outputStream.close();
-				System.out.println("Villagers serialized to JSon");
+				getLogger().log(Level.INFO, "Villagers information serialized.");
 			} catch (Exception ex) {
-				System.out.println("Can't serialize with Gson");
+				getLogger().log(Level.SEVERE, "Can't serialize villagers informations.", ex);
 				ex.printStackTrace();
 			}
 		}

@@ -212,8 +212,8 @@ public class PriestInfo extends ScannerInfo {
 				case SNOWMAN:
 				case SHEEP: {
 					LivingEntity living = (LivingEntity) i;
-					int current = living.getHealth();
-					int diff = living.getMaxHealth() - current;
+					double current = living.getHealth();
+					double diff = living.getMaxHealth() - current;
 					if ((canHeal) && (diff > 0)) {
 						hasHealed = true;
 						living.setHealth(current + 1);

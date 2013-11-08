@@ -3,9 +3,9 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.randomgd.bukkit.workers</groupId>
-	<artifactId>UsefulVillagers</artifactId>
+	<artifactId>UsefulVillagersReborn</artifactId>
 	<version>0.4.1</version>
-	<name>UsefulVillagers</name>
+	<name>UsefulVillagersReborn</name>
 	<repositories>
 		<repository>
 			<id>bukkit-repo</id>

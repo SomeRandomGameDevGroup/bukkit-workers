@@ -9,9 +9,6 @@
 # we use maven!
 /build.xml
 
-# maven
-/target
-
 # vim
 .*.sw[a-p]
 
@@ -32,9 +29,6 @@
 
 # Java
 *.class
-
-# Package Files #
-*.jar
 
 # More temporary files
 *~

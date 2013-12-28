@@ -1,0 +1,39 @@
+misc:
+  displaynotmanaged: false
+timing:
+  listupdate: 300
+  autosave: 60
+  entity:
+    period: 5
+    payload: 200000
+scanning:
+  horizontalrange: 1
+  verticalbelow: 2
+  verticalabove: 2
+chest:
+  depositymarker: true
+  retrievalmarker: true
+librarian:
+  bookproduction: 1000
+butcher:
+  radius: 2
+  shear: 3000
+blacksmith:
+  horizontalrange: 2
+  verticalbelow: 2
+  verticalabove: 2
+  miningcooldown: 2500
+  miningdepth: 32
+priest:
+  horizontalrange: 2
+  verticalbelow: 2
+  verticalabove: 2
+  healingcooldown: 2500
+  burningcooldown: 25000
+  healperdust: 5
+  burnperrod: 5
+  radius: 5
+  check: 3000
+  burnpower: 50
+
+

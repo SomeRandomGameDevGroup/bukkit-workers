@@ -1,0 +1,48 @@
+name: UsefulVillagersReborn
+version: 0.4.1
+author: "Drkmatr1984, Some Random Gamedev, GUIpsp"
+website: "http://dev.bukkit.org/server-mods/usefulvillagers/"
+
+main: org.randomgd.bukkit.workers.WorkerHandler
+
+permissions:
+    usefulvillagers.jobassign.*:
+       description: Give access to villager job selection.
+       children:
+          usefulvillagers.jobassign.farmer: true
+          usefulvillagers.jobassign.librarian: true
+          usefulvillagers.jobassign.butcher: true
+          usefulvillagers.jobassign.blacksmith: true
+          usefulvillagers.jobassign.priest: true
+          usefulvillagers.jobassign.miner: true
+          usefulvillagers.jobassign.seeder: true
+          usefulvillagers.jobassign.lumberjack: true
+    usefulvillagers.jobassign.priest:
+       description: Give access to priest job selection.
+       default: op
+    usefulvillagers.jobassign.farmer:
+       description: Give access to farmer job selection.
+       default: op
+    usefulvillagers.jobassign.librarian:
+       description: Give access to librarian job selection.
+       default: op
+    usefulvillagers.jobassign.butcher:
+       description: Give access to butcher job selection.
+       default: op
+    usefulvillagers.jobassign.blacksmith:
+       description: Give access to blacksmith job selection.
+       default: op
+    usefulvillagers.jobassign.miner:
+       description: Give access to miner (blacksmith sub-task) job selection.
+       default: op
+    usefulvillagers.jobassign.seeder:
+       description: Give access to seeder (farmer sub-task) job selection.
+       default: op
+    usefulvillagers.jobassign.lumberjack:
+       description: Give access to lumberjack (farmer sub-task) job selection.
+       default: op
+    usefulvillagers.give:
+       description: Give access to player donation to villagers.
+       default: true
+
+
